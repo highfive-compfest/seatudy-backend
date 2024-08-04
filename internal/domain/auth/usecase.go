@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/highfive-compfest/seatudy-backend/internal/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 )
 
 type UseCase struct {

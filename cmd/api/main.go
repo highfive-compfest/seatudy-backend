@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/auth"
 	"github.com/highfive-compfest/seatudy-backend/internal/config"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/auth"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
-	"github.com/highfive-compfest/seatudy-backend/internal/user"
 	"github.com/joho/godotenv"
 	"log"
 	"os"

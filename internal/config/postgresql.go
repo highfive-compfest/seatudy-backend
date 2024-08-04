@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"

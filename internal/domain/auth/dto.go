@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 )
 
 type RegisterRequest struct {
