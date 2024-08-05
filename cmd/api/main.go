@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 
 	engine := config.NewGin()
 	engine.Use(middleware.CORS())
+
+	config.InitializeS3()
 
 	// User
 	userRepo := user.NewRepository(db)
