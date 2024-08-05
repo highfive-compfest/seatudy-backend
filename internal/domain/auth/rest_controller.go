@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
+	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
 	"github.com/highfive-compfest/seatudy-backend/internal/response"
 	"net/http"
 )
@@ -19,7 +20,14 @@ func NewRestController(router *gin.Engine, uc *UseCase) {
 		authGroup.POST("/register", controller.Register())
 		authGroup.POST("/login", controller.Login())
 		authGroup.POST("/refresh", controller.Refresh())
-		authGroup.POST("/verify-email", controller.VerifyEmail())
+		authGroup.POST("/verification/email/send",
+			middleware.Authenticate(),
+			controller.SendOTP(),
+		)
+		authGroup.POST("/verification/email/verify",
+			middleware.Authenticate(),
+			controller.VerifyOTP(),
+		)
 	}
 
 }
@@ -78,8 +86,32 @@ func (c *RestController) Refresh() gin.HandlerFunc {
 	}
 }
 
-func (c *RestController) VerifyEmail() gin.HandlerFunc {
+func (c *RestController) SendOTP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// Implementation here
+		err := c.uc.SendOTP(ctx)
+		if err != nil {
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+			return
+		}
+
+		response.NewRestResponse(http.StatusOK, "OTP_SEND_SUCCESS", nil).Send(ctx)
+	}
+}
+
+func (c *RestController) VerifyOTP() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req VerifyEmailRequest
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			return
+		}
+
+		err := c.uc.VerifyOTP(ctx, req.OTP)
+		if err != nil {
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+			return
+		}
+
+		response.NewRestResponse(http.StatusOK, "OTP_VERIFY_SUCCESS", nil).Send(ctx)
 	}
 }

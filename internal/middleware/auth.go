@@ -3,7 +3,6 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/auth"
 	"github.com/highfive-compfest/seatudy-backend/internal/jwtoken"
 	"github.com/highfive-compfest/seatudy-backend/internal/response"
 	"strings"
@@ -14,7 +13,7 @@ func Authenticate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bearer := ctx.GetHeader("Authorization")
 		if bearer == "" {
-			err := auth.ErrTokenEmpty
+			err := apierror.ErrTokenEmpty
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
 			ctx.Abort()
 			return
@@ -22,7 +21,7 @@ func Authenticate() gin.HandlerFunc {
 
 		tokenSlice := strings.Split(bearer, " ")
 		if len(tokenSlice) != 2 {
-			err := auth.ErrTokenInvalid
+			err := apierror.ErrTokenInvalid
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
 			ctx.Abort()
 			return
@@ -32,21 +31,21 @@ func Authenticate() gin.HandlerFunc {
 
 		claims, err := jwtoken.DecodeAccessJWT(token)
 		if err != nil {
-			err2 := auth.ErrTokenInvalid
+			err2 := apierror.ErrTokenInvalid
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), nil).Send(ctx)
 			ctx.Abort()
 			return
 		}
 
 		if claims.Issuer != "seatudy-backend-accesstoken" {
-			err := auth.ErrTokenInvalid
+			err := apierror.ErrTokenInvalid
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
 			ctx.Abort()
 			return
 		}
 
 		if claims.ExpiresAt.Time.Before(time.Now()) {
-			err := auth.ErrTokenExpired
+			err := apierror.ErrTokenExpired
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
 			ctx.Abort()
 			return

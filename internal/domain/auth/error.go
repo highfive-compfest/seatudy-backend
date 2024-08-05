@@ -8,7 +8,7 @@ import (
 var (
 	ErrEmailAlreadyRegistered = apierror.ApiError{HttpStatus: http.StatusConflict, Message: "EMAIL_ALREADY_REGISTERED"}
 	ErrInvalidCredentials     = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "INVALID_CREDENTIALS"}
-	ErrTokenEmpty             = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "TOKEN_EMPTY"}
-	ErrTokenInvalid           = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "TOKEN_INVALID"}
-	ErrTokenExpired           = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "TOKEN_EXPIRED"}
+	ErrInvalidOTP             = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "INVALID_OTP"}
+	ErrExpiredOTP             = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "EXPIRED_OTP"}
+	ErrEmailAlreadyVerified   = apierror.ApiError{HttpStatus: http.StatusForbidden, Message: "EMAIL_ALREADY_VERIFIED"}
 )

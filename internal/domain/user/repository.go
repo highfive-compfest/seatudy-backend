@@ -10,6 +10,7 @@ type Repository interface {
 	GetByID(id uuid.UUID) (*User, error)
 	GetByEmail(email string) (*User, error)
 	Update(user *User) error
+	UpdateByEmail(email string, user *User) error
 }
 
 type repository struct {
@@ -42,6 +43,17 @@ func (r *repository) GetByEmail(email string) (*User, error) {
 
 func (r *repository) Update(user *User) error {
 	tx := r.db.Updates(user)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *repository) UpdateByEmail(email string, user *User) error {
+	tx := r.db.Where("email = ?", email).Updates(user)
 	if tx.Error != nil {
 		return tx.Error
 	}
