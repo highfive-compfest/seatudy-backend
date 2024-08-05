@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -20,6 +21,12 @@ type environmentVariables struct {
 	JwtAccessDuration  time.Duration
 	JwtRefreshSecret   []byte
 	JwtRefreshDuration time.Duration
+
+	SmtpHost     string
+	SmtpPort     int
+	SmtpUsername string
+	SmtpEmail    string
+	SmtpPassword string
 }
 
 var Env *environmentVariables
@@ -54,6 +61,15 @@ func LoadEnv() {
 	if err != nil {
 		log.Fatal("Fail to parse JWT_REFRESH_DURATION")
 	}
+
+	env.SmtpHost = os.Getenv("SMTP_HOST")
+	env.SmtpPort, err = strconv.Atoi(os.Getenv("SMTP_PORT"))
+	if err != nil {
+		log.Fatal("Fail to parse SMTP_PORT")
+	}
+	env.SmtpUsername = os.Getenv("SMTP_USERNAME")
+	env.SmtpEmail = os.Getenv("SMTP_EMAIL")
+	env.SmtpPassword = os.Getenv("SMTP_PASSWORD")
 
 	Env = env
 }
