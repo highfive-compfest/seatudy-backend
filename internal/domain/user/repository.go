@@ -1,16 +1,16 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type Repository interface {
-	// CreateUser creates a new user.
-	CreateUser(user *User) error
-
-	// GetUserByEmail retrieves a user by their email.
-	GetUserByEmail(email string) (*User, error)
-
-	// UpdateUser updates user information.
-	UpdateUser(user *User) error
+	Create(user *User) error
+	GetByID(id uuid.UUID) (*User, error)
+	GetByEmail(email string) (*User, error)
+	Update(user *User) error
+	UpdateByEmail(email string, user *User) error
 }
 
 type repository struct {
@@ -21,17 +21,44 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db}
 }
 
-func (r *repository) CreateUser(user *User) error {
-	// Implementation here
+func (r *repository) Create(user *User) error {
+	return r.db.Create(user).Error
+}
+
+func (r *repository) GetByID(id uuid.UUID) (*User, error) {
+	var user User
+	if err := r.db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *repository) GetByEmail(email string) (*User, error) {
+	var user User
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *repository) Update(user *User) error {
+	tx := r.db.Updates(user)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 	return nil
 }
 
-func (r *repository) GetUserByEmail(email string) (*User, error) {
-	// Implementation here
-	return nil, nil
-}
-
-func (r *repository) UpdateUser(user *User) error {
-	// Implementation here
+func (r *repository) UpdateByEmail(email string, user *User) error {
+	tx := r.db.Where("email = ?", email).Updates(user)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 	return nil
 }
