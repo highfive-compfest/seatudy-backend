@@ -19,6 +19,10 @@ func main() {
 	config.LoadEnv()
 
 	db := config.NewPostgresql()
+	rds := config.NewRedis()
+
+	mailDialer := config.NewMailDialer()
+
 	engine := config.NewGin()
 	engine.Use(middleware.CORS())
 
@@ -28,8 +32,8 @@ func main() {
 	user.NewRestController(engine, userUseCase)
 
 	// Auth
-	authRepo := auth.NewRepository(db)
-	authUseCase := auth.NewUseCase(authRepo, userRepo)
+	authRepo := auth.NewRepository(rds)
+	authUseCase := auth.NewUseCase(authRepo, userRepo, mailDialer)
 	auth.NewRestController(engine, authUseCase)
 
 	if err := engine.Run(":" + config.Env.Port); err != nil {

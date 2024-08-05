@@ -1,31 +1,33 @@
 package auth
 
-import "gorm.io/gorm"
+import (
+	"context"
+	"github.com/redis/go-redis/v9"
+	"time"
+)
 
 type Repository interface {
-	// StoreOTP stores the OTP in Redis.
-	StoreOTP(email, otp string) error
-
-	// GetOTP retrieves the OTP from Redis.
-	GetOTP(email string) (string, error)
-
-	// To be continued
+	SaveOTP(ctx context.Context, email string, otp string) error
+	GetOTP(ctx context.Context, email string) (string, error)
+	DeleteOTP(ctx context.Context, email string) error
 }
 
 type repository struct {
-	db *gorm.DB
+	rds *redis.Client
 }
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{db}
+func NewRepository(rds *redis.Client) Repository {
+	return &repository{rds: rds}
 }
 
-func (r *repository) StoreOTP(email, otp string) error {
-	// Implementation here
-	return nil
+func (r *repository) SaveOTP(ctx context.Context, email string, otp string) error {
+	return r.rds.Set(ctx, "auth:"+email+":otp", otp, 10*time.Minute).Err()
 }
 
-func (r *repository) GetOTP(email string) (string, error) {
-	// Implementation here
-	return "", nil
+func (r *repository) GetOTP(ctx context.Context, email string) (string, error) {
+	return r.rds.Get(ctx, "auth:"+email+":otp").Result()
+}
+
+func (r *repository) DeleteOTP(ctx context.Context, email string) error {
+	return r.rds.Del(ctx, "auth:"+email+":otp").Err()
 }
