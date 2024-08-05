@@ -8,8 +8,9 @@ import (
 )
 
 type environmentVariables struct {
-	ENV  string
-	Port string
+	ENV         string
+	FrontendUrl string
+	Port        string
 
 	DbDsn string
 
@@ -39,6 +40,7 @@ func LoadEnv() {
 	if env.ENV == "" {
 		log.Fatal("ENV is not set")
 	}
+	env.FrontendUrl = os.Getenv("FRONTEND_URL")
 	env.Port = os.Getenv("PORT")
 
 	env.DbDsn = os.Getenv("DB_DSN")

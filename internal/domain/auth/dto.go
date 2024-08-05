@@ -37,3 +37,18 @@ type VerifyEmailRequest struct {
 type VerifyEmailResponse struct {
 	AccessToken string `json:"access_token"`
 }
+
+type SendResetPasswordLinkRequest struct {
+	Email string `json:"email" binding:"required,email,max=320"`
+}
+
+type ResetPasswordRequest struct {
+	Email       string `json:"email" binding:"required,email,max=320"`
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required,max=72,min=8"`
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required,max=72,min=8"`
+	NewPassword string `json:"new_password" binding:"required,max=72,min=8"`
+}
