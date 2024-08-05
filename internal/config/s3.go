@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
-	
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -12,6 +11,7 @@ import (
 )
 
 var S3Svc *s3.S3
+
 // InitializeS3 initializes the S3 session and returns the S3 service client
 func InitializeS3() {
 	sess, err := session.NewSession(&aws.Config{
