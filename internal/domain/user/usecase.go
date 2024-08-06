@@ -84,7 +84,6 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 		}
 
 		imageUrl, err = config.UploadFile(
-			config.Env.AwsBucketName,
 			"users/avatar/"+userID.String()+"."+strings.Split(fileType, "/")[1],
 			req.ImageFile,
 		)

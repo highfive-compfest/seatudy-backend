@@ -1,16 +1,22 @@
 package config
 
 import (
+	"log"
+
+
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func NewPostgresql(migrations ...any) *gorm.DB {
-	db, err := gorm.Open(postgres.Open(Env.DbDsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalln(err)
-	}
+	db, err := gorm.Open(postgres.New(postgres.Config{
+        DSN:                  Env.DbDsn,
+        PreferSimpleProtocol: true, // disables implicit prepared statement usage
+    }), &gorm.Config{})
+    if err != nil {
+        log.Fatalf("Failed to connect to database: %v", err)
+    }
 
 	if err := migratePostgresqlTables(db, migrations...); err != nil {
 		log.Fatalln(err)
