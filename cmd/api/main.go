@@ -8,7 +8,6 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
-
 )
 
 func main() {
@@ -19,7 +18,9 @@ func main() {
 	}
 	config.LoadEnv()
 
-	db := config.NewPostgresql()
+	db := config.NewPostgresql(
+		&user.User{},
+	)
 	rds := config.NewRedis()
 
 	mailDialer := config.NewMailDialer()

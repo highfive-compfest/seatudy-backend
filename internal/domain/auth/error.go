@@ -11,7 +11,6 @@ var (
 	ErrInvalidOTP               = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "INVALID_OTP"}
 	ErrExpiredOTP               = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "EXPIRED_OTP"}
 	ErrEmailAlreadyVerified     = apierror.ApiError{HttpStatus: http.StatusForbidden, Message: "EMAIL_ALREADY_VERIFIED"}
-	ErrUserNotFound             = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "USER_NOT_FOUND"}
 	ErrInvalidResetPasswordLink = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "INVALID_RESET_PASSWORD_LINK"}
 	ErrExpiredResetPasswordLink = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "EXPIRED_RESET_PASSWORD_LINK"}
 )

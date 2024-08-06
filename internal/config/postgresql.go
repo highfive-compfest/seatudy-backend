@@ -1,26 +1,25 @@
 package config
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 )
 
-func NewPostgresql() *gorm.DB {
+func NewPostgresql(migrations ...any) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(Env.DbDsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	if err := migratePostgresqlTables(db); err != nil {
+	if err := migratePostgresqlTables(db, migrations...); err != nil {
 		log.Fatalln(err)
 	}
 
 	return db
 }
 
-func migratePostgresqlTables(db *gorm.DB) error {
+func migratePostgresqlTables(db *gorm.DB, migrations ...any) error {
 	if err := db.Exec(`
 		DO $$ BEGIN
 			CREATE TYPE user_role AS ENUM (
@@ -63,7 +62,7 @@ func migratePostgresqlTables(db *gorm.DB) error {
 	}
 
 	if err := db.AutoMigrate(
-		&user.User{},
+		migrations..., // BREAKING: entities should be passed from cmd/api/main.go due to circular dependency issue
 	); err != nil {
 		return err
 	}
