@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/config"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/auth"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
-	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 
+	"github.com/highfive-compfest/seatudy-backend/internal/config"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/auth"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/course"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
+	"github.com/highfive-compfest/seatudy-backend/internal/s3"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -27,7 +29,7 @@ func main() {
 	engine := config.NewGin()
 	engine.Use(middleware.CORS())
 
-	config.InitializeS3()
+	s3.InitializeS3()
 
 	// User
 	userRepo := user.NewRepository(db)
@@ -38,6 +40,11 @@ func main() {
 	authRepo := auth.NewRepository(rds)
 	authUseCase := auth.NewUseCase(authRepo, userRepo, mailDialer)
 	auth.NewRestController(engine, authUseCase)
+
+	// Course
+	courseRepo := course.NewRepository(db)
+	courseUseCase := course.NewUseCase(courseRepo)
+	course.NewRestController(engine,courseUseCase)
 
 	if err := engine.Run(":" + config.Env.Port); err != nil {
 		log.Fatalln(err)

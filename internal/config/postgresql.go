@@ -1,17 +1,22 @@
 package config
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
+	"log"
+
+
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func NewPostgresql() *gorm.DB {
-	db, err := gorm.Open(postgres.Open(Env.DbDsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalln(err)
-	}
+	db, err := gorm.Open(postgres.New(postgres.Config{
+        DSN:                  Env.DbDsn,
+        PreferSimpleProtocol: true, // disables implicit prepared statement usage
+    }), &gorm.Config{})
+    if err != nil {
+        log.Fatalf("Failed to connect to database: %v", err)
+    }
 
 	if err := migratePostgresqlTables(db); err != nil {
 		log.Fatalln(err)
@@ -63,7 +68,8 @@ func migratePostgresqlTables(db *gorm.DB) error {
 	}
 
 	if err := db.AutoMigrate(
-		&user.User{},
+		&schema.User{},
+		&schema.Course{},
 	); err != nil {
 		return err
 	}
