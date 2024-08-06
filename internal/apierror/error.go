@@ -10,4 +10,6 @@ var (
 	ErrTokenExpired     = ApiError{HttpStatus: http.StatusUnauthorized, Message: "TOKEN_EXPIRED"}
 	ErrEmailNotVerified = ApiError{HttpStatus: http.StatusUnauthorized, Message: "EMAIL_NOT_VERIFIED"}
 	ErrForbidden        = ApiError{HttpStatus: http.StatusForbidden, Message: "FORBIDDEN"}
+	ErrFileTooLarge     = ApiError{HttpStatus: http.StatusBadRequest, Message: "FILE_TOO_LARGE"}
+	ErrInvalidFileType  = ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_FILE_TYPE"}
 )
