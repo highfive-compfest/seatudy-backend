@@ -25,7 +25,8 @@ func InitializeS3() {
 }
 
 // UploadFile uploads a file to the specified S3 bucket
-func UploadFile(bucket, key string, fileHeader *multipart.FileHeader) (string, error) {
+// UploadFile uploads a file to the specified S3 bucket
+func UploadFile( key string, fileHeader *multipart.FileHeader) (string, error) {
 	file, err := fileHeader.Open()
 	if err != nil {
 		return "", fmt.Errorf("unable to open file %q: %v", fileHeader.Filename, err)
@@ -33,15 +34,15 @@ func UploadFile(bucket, key string, fileHeader *multipart.FileHeader) (string, e
 	defer file.Close()
 
 	_, err = S3Svc.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(Env.AwsBucketName),
 		Key:    aws.String(key),
 		Body:   file,
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to upload %q to %q: %v", fileHeader.Filename, bucket, err)
+		return "", fmt.Errorf("unable to upload %q to %q: %v", fileHeader.Filename, Env.AwsBucketName, err)
 	}
 
 	// Construct the permanent URL
-	urlStr := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucket, aws.StringValue(S3Svc.Config.Region), key)
+	urlStr := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", Env.AwsBucketName, aws.StringValue(S3Svc.Config.Region), key)
 	return urlStr, nil
 }
