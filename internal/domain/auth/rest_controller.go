@@ -12,10 +12,10 @@ type RestController struct {
 	uc *UseCase
 }
 
-func NewRestController(router *gin.Engine, uc *UseCase) {
+func NewRestController(engine *gin.Engine, uc *UseCase) {
 	controller := &RestController{uc: uc}
 
-	authGroup := router.Group("/v1/auth")
+	authGroup := engine.Group("/v1/auth")
 	{
 		authGroup.POST("/register", controller.Register())
 		authGroup.POST("/login", controller.Login())
@@ -42,7 +42,8 @@ func (c *RestController) Register() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req RegisterRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -59,7 +60,8 @@ func (c *RestController) Login() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req LoginRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -77,7 +79,8 @@ func (c *RestController) Refresh() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req RefreshRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -94,7 +97,8 @@ func (c *RestController) Refresh() gin.HandlerFunc {
 func (c *RestController) SendOTP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := c.uc.SendOTP(ctx); err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -106,7 +110,8 @@ func (c *RestController) VerifyOTP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req VerifyEmailRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -123,7 +128,8 @@ func (c *RestController) SendResetPasswordLink() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req SendResetPasswordLinkRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -140,7 +146,8 @@ func (c *RestController) ResetPassword() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ResetPasswordRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
@@ -157,7 +164,8 @@ func (c *RestController) ChangePassword() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ChangePasswordRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			response.NewRestResponse(http.StatusBadRequest, "VALIDATION_ERROR", err.Error()).Send(ctx)
+			err2 := apierror.ErrValidation
+			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
