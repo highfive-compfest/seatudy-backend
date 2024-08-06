@@ -3,29 +3,28 @@ package jwtoken
 import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/highfive-compfest/seatudy-backend/internal/config"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"time"
 )
 
 type AccessClaims struct {
 	jwt.RegisteredClaims
-	Email           string    `json:"email"`
-	IsEmailVerified bool      `json:"is_email_verified"`
-	Name            string    `json:"name"`
-	Role            user.Role `json:"role"`
+	Email           string `json:"email"`
+	IsEmailVerified bool   `json:"is_email_verified"`
+	Name            string `json:"name"`
+	Role            string `json:"role"`
 }
 
-func CreateAccessJWT(user *user.User) (string, error) {
+func CreateAccessJWT(id, email string, isEmailVerified bool, name string, role string) (string, error) {
 	claims := AccessClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   user.ID.String(),
+			Subject:   id,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.Env.JwtAccessDuration)),
 			Issuer:    "seatudy-backend-accesstoken",
 		},
-		Email:           user.Email,
-		IsEmailVerified: user.IsEmailVerified,
-		Name:            user.Name,
-		Role:            user.Role,
+		Email:           email,
+		IsEmailVerified: isEmailVerified,
+		Name:            name,
+		Role:            role,
 	}
 
 	unsignedJWT := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -37,9 +36,9 @@ func CreateAccessJWT(user *user.User) (string, error) {
 	return signedJWT, nil
 }
 
-func CreateRefreshJWT(user *user.User) (string, error) {
+func CreateRefreshJWT(id string) (string, error) {
 	claims := jwt.RegisteredClaims{
-		Subject:   user.ID.String(),
+		Subject:   id,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.Env.JwtRefreshDuration)),
 		Issuer:    "seatudy-backend-refreshtoken",
 	}

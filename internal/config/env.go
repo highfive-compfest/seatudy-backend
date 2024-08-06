@@ -8,8 +8,9 @@ import (
 )
 
 type environmentVariables struct {
-	ENV  string
-	Port string
+	ENV         string
+	FrontendUrl string
+	Port        string
 
 	DbDsn string
 
@@ -22,18 +23,16 @@ type environmentVariables struct {
 	JwtRefreshSecret   []byte
 	JwtRefreshDuration time.Duration
 
-	AwsAccessId        string
-	AmsSecretAccessId  string
-	AwsRegion          string
-	AwsBucketName      string
-
+	AwsAccessId       string
+	AmsSecretAccessId string
+	AwsRegion         string
+	AwsBucketName     string
 
 	SmtpHost     string
 	SmtpPort     int
 	SmtpUsername string
 	SmtpEmail    string
 	SmtpPassword string
-
 }
 
 var Env *environmentVariables
@@ -46,6 +45,7 @@ func LoadEnv() {
 	if env.ENV == "" {
 		log.Fatal("ENV is not set")
 	}
+	env.FrontendUrl = os.Getenv("FRONTEND_URL")
 	env.Port = os.Getenv("PORT")
 
 	env.DbDsn = os.Getenv("DB_DSN")
@@ -69,7 +69,6 @@ func LoadEnv() {
 		log.Fatal("Fail to parse JWT_REFRESH_DURATION")
 	}
 
-
 	env.AwsAccessId = os.Getenv("AWS_ACCESS_KEY_ID")
 	env.AmsSecretAccessId = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	env.AwsRegion = os.Getenv("AWS_REGION")
@@ -86,7 +85,6 @@ func LoadEnv() {
 	env.SmtpUsername = os.Getenv("SMTP_USERNAME")
 	env.SmtpEmail = os.Getenv("SMTP_EMAIL")
 	env.SmtpPassword = os.Getenv("SMTP_PASSWORD")
-
 
 	Env = env
 }

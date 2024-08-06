@@ -18,14 +18,14 @@ func NewPostgresql() *gorm.DB {
         log.Fatalf("Failed to connect to database: %v", err)
     }
 
-	if err := migratePostgresqlTables(db); err != nil {
+	if err := migratePostgresqlTables(db, migrations...); err != nil {
 		log.Fatalln(err)
 	}
 
 	return db
 }
 
-func migratePostgresqlTables(db *gorm.DB) error {
+func migratePostgresqlTables(db *gorm.DB, migrations ...any) error {
 	if err := db.Exec(`
 		DO $$ BEGIN
 			CREATE TYPE user_role AS ENUM (
@@ -68,8 +68,7 @@ func migratePostgresqlTables(db *gorm.DB) error {
 	}
 
 	if err := db.AutoMigrate(
-		&schema.User{},
-		&schema.Course{},
+		migrations..., // BREAKING: entities should be passed from cmd/api/main.go due to circular dependency issue
 	); err != nil {
 		return err
 	}
