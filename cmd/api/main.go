@@ -9,10 +9,9 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/course"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
-	"github.com/highfive-compfest/seatudy-backend/internal/s3"
+
 	"github.com/joho/godotenv"
-	"log"
-	"os"
+
 )
 
 func main() {
@@ -25,6 +24,7 @@ func main() {
 
 	db := config.NewPostgresql(
 		&user.User{},
+		&course.Course{},
 	)
 	rds := config.NewRedis()
 
@@ -33,7 +33,7 @@ func main() {
 	engine := config.NewGin()
 	engine.Use(middleware.CORS())
 
-	s3.InitializeS3()
+	config.InitializeS3()
 
 	// User
 	userRepo := user.NewRepository(db)
