@@ -4,12 +4,12 @@ import (
 	"log"
 
 
-	"github.com/highfive-compfest/seatudy-backend/internal/schema"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func NewPostgresql() *gorm.DB {
+func NewPostgresql(migrations ...any) *gorm.DB {
 	db, err := gorm.Open(postgres.New(postgres.Config{
         DSN:                  Env.DbDsn,
         PreferSimpleProtocol: true, // disables implicit prepared statement usage
