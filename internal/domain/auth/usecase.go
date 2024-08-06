@@ -3,6 +3,7 @@ package auth
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
@@ -155,8 +156,8 @@ func generateOTP() int {
 	return rand.Intn(high-low) + low
 }
 
-func generateMail(recipientEmail, subject, templatePath string, data map[string]any) (*gomail.Message, error) {
-	tmpl, err := template.ParseFiles(templatePath)
+func generateMail(recipientEmail, subject, templateStr string, data map[string]any) (*gomail.Message, error) {
+	tmpl, err := template.New("email").Parse(templateStr)
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +175,9 @@ func generateMail(recipientEmail, subject, templatePath string, data map[string]
 
 	return mail, nil
 }
+
+//go:embed otp_email_template.html
+var otpEmailTemplate string
 
 func (uc *UseCase) SendOTP(ctx context.Context) error {
 	email := ctx.Value("user.email").(string)
@@ -199,8 +203,7 @@ func (uc *UseCase) SendOTP(ctx context.Context) error {
 		"otp":            otp,
 	}
 
-	mail, err := generateMail(email, "Your Seatudy OTP Code",
-		"internal/domain/auth/otp_email_template.html", data)
+	mail, err := generateMail(email, "Your Seatudy OTP Code", otpEmailTemplate, data)
 	if err != nil {
 		log.Println("Error generating OTP email: ", err)
 		return apierror.ErrInternalServer
@@ -253,6 +256,9 @@ func generateRandomString(length int) string {
 	return string(b)
 }
 
+//go:embed reset_password_email_template.html
+var resetPasswordEmailTemplate string
+
 func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPasswordLinkRequest) error {
 	userEntity, err := uc.userRepo.GetByEmail(req.Email)
 	if err != nil {
@@ -277,8 +283,7 @@ func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPass
 			"/reset-password?token=" + token + "&email=" + url.QueryEscape(req.Email),
 	}
 
-	mail, err := generateMail(req.Email, "Reset Your Seatudy Password",
-		"internal/domain/auth/reset_password_email_template.html", data)
+	mail, err := generateMail(req.Email, "Reset Your Seatudy Password", resetPasswordEmailTemplate, data)
 	if err != nil {
 		log.Println("Error generating reset password email: ", err)
 		return apierror.ErrInternalServer
