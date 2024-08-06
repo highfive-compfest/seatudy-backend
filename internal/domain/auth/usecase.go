@@ -73,7 +73,7 @@ func (uc *UseCase) Register(req *RegisterRequest) error {
 }
 
 func (uc *UseCase) Login(req *LoginRequest) (*LoginResponse, error) {
-	userEntity, err := uc.userRepo.GetByEmail(req.Email)
+	usr, err := uc.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrInvalidCredentials
@@ -82,18 +82,20 @@ func (uc *UseCase) Login(req *LoginRequest) (*LoginResponse, error) {
 		return nil, apierror.ErrInternalServer
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(userEntity.PasswordHash), []byte(req.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(req.Password))
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	accessToken, err := jwtoken.CreateAccessJWT(userEntity)
+	accessToken, err := jwtoken.CreateAccessJWT(
+		usr.ID.String(), usr.Email, usr.IsEmailVerified, usr.Name, string(usr.Role),
+	)
 	if err != nil {
 		log.Println("Error creating access token: ", err)
 		return nil, apierror.ErrInternalServer
 	}
 
-	refreshToken, err := jwtoken.CreateRefreshJWT(userEntity)
+	refreshToken, err := jwtoken.CreateRefreshJWT(usr.ID.String())
 	if err != nil {
 		log.Println("Error creating refresh token: ", err)
 		return nil, apierror.ErrInternalServer
@@ -102,7 +104,7 @@ func (uc *UseCase) Login(req *LoginRequest) (*LoginResponse, error) {
 	return &LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         userEntity,
+		User:         usr,
 	}, nil
 }
 
@@ -134,7 +136,9 @@ func (uc *UseCase) Refresh(req *RefreshRequest) (*RefreshResponse, error) {
 		return nil, apierror.ErrInternalServer
 	}
 
-	accessToken, err := jwtoken.CreateAccessJWT(userEntity)
+	accessToken, err := jwtoken.CreateAccessJWT(
+		userEntity.ID.String(), userEntity.Email, userEntity.IsEmailVerified, userEntity.Name, string(userEntity.Role),
+	)
 	if err != nil {
 		log.Println("Error creating access token: ", err)
 		return nil, apierror.ErrInternalServer
@@ -253,7 +257,7 @@ func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPass
 	userEntity, err := uc.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
+			return user.ErrUserNotFound
 		}
 		log.Println("Error getting user by email: ", err)
 		return apierror.ErrInternalServer
@@ -328,7 +332,7 @@ func (uc *UseCase) ChangePassword(ctx context.Context, req *ChangePasswordReques
 	userEntity, err := uc.userRepo.GetByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
+			return user.ErrUserNotFound
 		}
 		log.Println("Error getting user by email: ", err)
 		return apierror.ErrInternalServer
