@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
-	"github.com/highfive-compfest/seatudy-backend/internal/config"
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
-
+	"github.com/highfive-compfest/seatudy-backend/internal/config"
+	"github.com/highfive-compfest/seatudy-backend/internal/fileutil"
 )
 
 type UseCase struct {
@@ -37,10 +39,42 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
         return ErrUnauthorizedAccess // Or any other appropriate error
     }
 
+    
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Println("Error generating UUID: ", err)
+		return apierror.ErrInternalServer
+	}
 
     // Upload image if present
     if imageFile != nil {
-        imageUrl, err = config.UploadFile( imageFile.Filename, imageFile)
+
+        if imageFile.Size > 2*fileutil.MegaByte {
+			err2 := apierror.ErrFileTooLarge
+			apierror.AddPayload(&err2, map[string]string{
+				"max_size":      "2 MB",
+				"received_size": fileutil.ByteToAppropriateUnit(imageFile.Size),
+			})
+			return err2
+		}
+        fileType, err := fileutil.DetectMultipartFileType(imageFile)
+
+        if err != nil {
+			log.Println("Error detecting image type: ", err)
+			return apierror.ErrInternalServer
+		}
+
+        allowedTypes := fileutil.ImageContentTypes
+		if !slices.Contains(allowedTypes, fileType) {
+			err2 := apierror.ErrInvalidFileType
+			apierror.AddPayload(&err2, map[string]any{
+				"allowed_types": allowedTypes,
+				"received_type": fileType,
+			})
+			return err2
+		}
+
+        imageUrl, err = config.UploadFile("course/image/" +id.String()+ "." + imageFile.Filename, imageFile)
         if err != nil {
             return fmt.Errorf("failed to upload image: %v", err)
         }
@@ -49,17 +83,31 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 
     // Upload syllabus if present
     if syllabusFile != nil {
-        syllabusUrl, err = config.UploadFile( syllabusFile.Filename, syllabusFile)
+
+        fileType, err := fileutil.DetectMultipartFileType(syllabusFile)
+        
+        if err != nil {
+			log.Println("Error detecting syllabus type: ", err)
+			return apierror.ErrInternalServer
+		}
+        allowedTypes := fileutil.SyllabusContentTypes
+		if !slices.Contains(allowedTypes, fileType) {
+			err2 := apierror.ErrInvalidFileType
+			apierror.AddPayload(&err2, map[string]any{
+				"allowed_types": allowedTypes,
+				"received_type": fileType,
+			})
+			return err2
+		}
+
+
+        syllabusUrl, err = config.UploadFile("course/syllabus/" +id.String()+ "." +  syllabusFile.Filename, syllabusFile)
         if err != nil {
             return fmt.Errorf("failed to upload syllabus: %v", err)
         }
     }
 
-	id, err := uuid.NewV7()
-	if err != nil {
-		log.Println("Error generating UUID: ", err)
-		return apierror.ErrInternalServer
-	}
+
 
 
 
@@ -101,7 +149,32 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 
     // Handle image update if file is provided
     if imageFile != nil {
-        imageUrl, err := config.UploadFile(imageFile.Filename, imageFile) // Assumes UploadFile encapsulates S3 logic
+
+        if imageFile.Size > 2*fileutil.MegaByte {
+			err2 := apierror.ErrFileTooLarge
+			apierror.AddPayload(&err2, map[string]string{
+				"max_size":      "2 MB",
+				"received_size": fileutil.ByteToAppropriateUnit(imageFile.Size),
+			})
+			return Course{},err2
+		}
+        fileType, err := fileutil.DetectMultipartFileType(imageFile)
+
+        if err != nil {
+			log.Println("Error detecting image type: ", err)
+			return Course{},apierror.ErrInternalServer
+		}
+
+        allowedTypes := fileutil.ImageContentTypes
+		if !slices.Contains(allowedTypes, fileType) {
+			err2 := apierror.ErrInvalidFileType
+			apierror.AddPayload(&err2, map[string]any{
+				"allowed_types": allowedTypes,
+				"received_type": fileType,
+			})
+			return Course{},err2
+		}
+        imageUrl, err := config.UploadFile("course/image/" +id.String()+ "." +imageFile.Filename, imageFile) // Assumes UploadFile encapsulates S3 logic
         if err != nil {
             return Course{}, fmt.Errorf("failed to upload image: %v", err)
         }
@@ -110,7 +183,22 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 
     // Handle syllabus update if file is provided
     if syllabusFile != nil {
-        syllabusUrl, err := config.UploadFile(syllabusFile.Filename, syllabusFile)
+        fileType, err := fileutil.DetectMultipartFileType(syllabusFile)
+        
+        if err != nil {
+			log.Println("Error detecting syllabus type: ", err)
+			return Course{},apierror.ErrInternalServer
+		}
+        allowedTypes := fileutil.SyllabusContentTypes
+		if !slices.Contains(allowedTypes, fileType) {
+			err2 := apierror.ErrInvalidFileType
+			apierror.AddPayload(&err2, map[string]any{
+				"allowed_types": allowedTypes,
+				"received_type": fileType,
+			})
+			return Course{},err2
+		}
+        syllabusUrl, err := config.UploadFile("course/syllabus/" +id.String()+ "." +syllabusFile.Filename, syllabusFile)
         if err != nil {
             return Course{}, fmt.Errorf("failed to upload syllabus: %v", err)
         }
