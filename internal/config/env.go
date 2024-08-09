@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/midtrans/midtrans-go"
 	"log"
 	"os"
 	"strconv"
@@ -33,6 +34,9 @@ type environmentVariables struct {
 	SmtpUsername string
 	SmtpEmail    string
 	SmtpPassword string
+
+	MidtransServerKey   string
+	MidtransEnvironment midtrans.EnvironmentType
 }
 
 var Env *environmentVariables
@@ -85,6 +89,12 @@ func LoadEnv() {
 	env.SmtpUsername = os.Getenv("SMTP_USERNAME")
 	env.SmtpEmail = os.Getenv("SMTP_EMAIL")
 	env.SmtpPassword = os.Getenv("SMTP_PASSWORD")
+
+	env.MidtransServerKey = os.Getenv("MIDTRANS_SERVER_KEY")
+	env.MidtransEnvironment = midtrans.Sandbox
+	//if env.ENV == "production" {
+	//	env.MidtransEnvironment = midtrans.Production
+	//}
 
 	Env = env
 }

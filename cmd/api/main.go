@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
 	"log"
 	"os"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
 
 	"github.com/joho/godotenv"
-
 )
 
 func main() {
@@ -29,6 +29,7 @@ func main() {
 	rds := config.NewRedis()
 
 	mailDialer := config.NewMailDialer()
+	config.SetupMidtrans()
 
 	engine := config.NewGin()
 	engine.Use(middleware.CORS())
