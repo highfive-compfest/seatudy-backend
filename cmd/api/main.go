@@ -23,6 +23,8 @@ func main() {
 	config.LoadEnv()
 
 	db := config.NewPostgresql(
+		&wallet.Wallet{},
+		&wallet.MidtransTransaction{},
 		&user.User{},
 		&course.Course{},
 	)
