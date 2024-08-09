@@ -9,7 +9,6 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/fileutil"
 	"gorm.io/gorm"
 	"log"
-	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -99,7 +98,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 	userEntity := User{
 		ID:       userID,
 		Name:     req.Name,
-		ImageURL: url.QueryEscape(imageUrl),
+		ImageURL: imageUrl,
 	}
 
 	if err := uc.repo.Update(&userEntity); err != nil {
