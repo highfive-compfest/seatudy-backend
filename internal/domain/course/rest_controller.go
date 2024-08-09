@@ -21,10 +21,11 @@ func NewRestController(router *gin.Engine, uc *UseCase) {
 
     courseGroup := router.Group("/v1/courses")
     {
-        courseGroup.GET("/", controller.GetAll())
+        courseGroup.GET("", controller.GetAll())
         courseGroup.GET("/:id", controller.GetByID())
-        courseGroup.POST("/",middleware.Authenticate(), controller.Create())
+        courseGroup.POST("",middleware.Authenticate(), controller.Create())
         courseGroup.PUT("/:id",middleware.Authenticate(), controller.Update())
+        courseGroup.GET("/instructor/:id", middleware.Authenticate(), controller.GetInstructorCourse())
         courseGroup.DELETE("/:id",middleware.Authenticate(), controller.Delete())
     }
 }
@@ -39,6 +40,31 @@ func (c *RestController) GetAll() gin.HandlerFunc {
         response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", courses).Send(ctx)
     }
 }
+
+func (c *RestController) GetInstructorCourse() gin.HandlerFunc{
+    return func(ctx *gin.Context) {
+        instructorID, err := uuid.Parse(ctx.Param("id"))
+        if err != nil {
+            response.NewRestResponse(http.StatusBadRequest, "Invalid Instructor ID", nil).Send(ctx)
+            return
+        }
+
+        // Fetch all courses by the instructor ID
+        courses, err := c.uc.GetByInstructorID(ctx, instructorID)
+        if err != nil {
+            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+            return
+        }
+        
+        if len(courses) == 0 {
+            response.NewRestResponse(http.StatusOK, "No courses found for this instructor", nil).Send(ctx)
+            return
+        }
+
+        response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", courses).Send(ctx)
+    }
+}
+
 
 func (c *RestController) GetByID() gin.HandlerFunc {
     return func(ctx *gin.Context) {
