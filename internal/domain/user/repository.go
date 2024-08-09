@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/google/uuid"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
 	"gorm.io/gorm"
 )
 
@@ -14,15 +15,28 @@ type Repository interface {
 }
 
 type repository struct {
-	db *gorm.DB
+	db         *gorm.DB
+	walletRepo wallet.IRepository
 }
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{db}
+func NewRepository(db *gorm.DB, walletRepo wallet.IRepository) Repository {
+	return &repository{db, walletRepo}
 }
 
 func (r *repository) Create(user *User) error {
-	return r.db.Create(user).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+		walletID, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		return r.walletRepo.Create(tx, &wallet.Wallet{
+			ID:     walletID,
+			UserID: user.ID,
+		})
+	})
 }
 
 func (r *repository) GetByID(id uuid.UUID) (*User, error) {
