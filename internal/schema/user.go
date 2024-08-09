@@ -1,4 +1,4 @@
-package user
+package schema
 
 import (
 	"github.com/google/uuid"
@@ -9,18 +9,19 @@ import (
 type Role string
 
 const (
-	Student    Role = "student"
-	Instructor Role = "instructor"
+	RoleStudent    Role = "student"
+	RoleInstructor Role = "instructor"
 )
 
 type User struct {
 	ID              uuid.UUID      `json:"id" gorm:"primaryKey"`
-	Email           string         `json:"email" gorm:"type:varchar(320);unique;not null;index:,type:hash"`
+	Email           string         `json:"email" gorm:"type:varchar(320);unique;not null"`
 	IsEmailVerified bool           `json:"is_email_verified" gorm:"not null;default:false"`
 	Name            string         `json:"name" gorm:"type:varchar(50);not null"`
 	PasswordHash    string         `json:"-" gorm:"type:char(60);not null"`
 	Role            Role           `json:"role" gorm:"type:user_role;not null"`
 	ImageURL        string         `json:"image_url" gorm:"type:text"`
+	Balance         float32        `json:"balance" gorm:"type:numeric(11,2);not null;default:0"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`

@@ -10,7 +10,10 @@ require (
 	gorm.io/gorm v1.25.11
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
+require (
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/midtrans/midtrans-go v1.3.8 // indirect
+)
 
 require (
 	github.com/aws/aws-sdk-go v1.55.5

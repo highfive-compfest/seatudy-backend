@@ -1,22 +1,28 @@
 package config
 
 import (
+	"gorm.io/gorm/logger"
 	"log"
-
-
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func NewPostgresql(migrations ...any) *gorm.DB {
+	gormLogger := logger.Default
+	if Env.ENV != "production" {
+		gormLogger = gormLogger.LogMode(logger.Info)
+	}
+
 	db, err := gorm.Open(postgres.New(postgres.Config{
-        DSN:                  Env.DbDsn,
-        PreferSimpleProtocol: true, // disables implicit prepared statement usage
-    }), &gorm.Config{})
-    if err != nil {
-        log.Fatalf("Failed to connect to database: %v", err)
-    }
+		DSN:                  Env.DbDsn,
+		PreferSimpleProtocol: true, // disables implicit prepared statement usage
+	}), &gorm.Config{
+		Logger: gormLogger,
+	})
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 
 	if err := migratePostgresqlTables(db, migrations...); err != nil {
 		log.Fatalln(err)
@@ -59,6 +65,21 @@ func migratePostgresqlTables(db *gorm.DB, migrations ...any) error {
 			CREATE TYPE post_type AS ENUM (
 				'material',
 				'assignment'
+			);
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;
+	`).Error; err != nil {
+		return err
+	}
+
+	if err := db.Exec(`
+		DO $$ BEGIN
+			CREATE TYPE midtrans_status AS ENUM (
+				'challenge',
+				'success',
+				'failure',
+				'pending'
 			);
 		EXCEPTION
 			WHEN duplicate_object THEN null;
