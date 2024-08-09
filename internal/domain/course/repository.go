@@ -24,7 +24,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) GetAll(ctx context.Context) ([]Course, error) {
     var courses []Course
-    if err := r.db.WithContext(ctx).Find(&courses).Error; err != nil {
+    if err := r.db.Preload("Materials.Attachments").Find(&courses).Error; err != nil {
         return nil, err
     }
     return courses, nil
@@ -32,7 +32,7 @@ func (r *repository) GetAll(ctx context.Context) ([]Course, error) {
 
 func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (Course, error) {
     var course Course
-    if err := r.db.WithContext(ctx).First(&course, "id = ?", id).Error; err != nil {
+    if err := r.db.Preload("Materials.Attachments").First(&course, "id = ?", id).Error; err != nil {
         return Course{}, err
     }
     return course, nil
