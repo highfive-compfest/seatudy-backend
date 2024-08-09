@@ -1,4 +1,4 @@
-package wallet
+package schema
 
 import (
 	"github.com/google/uuid"

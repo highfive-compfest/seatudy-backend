@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
 	"github.com/highfive-compfest/seatudy-backend/internal/pagination"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"log"
 	"time"
 )
@@ -36,12 +37,12 @@ func (uc *UseCase) TopUp(ctx context.Context, req *TopUpRequest) (*TopUpResponse
 	if err != nil {
 		return nil, apierror.ErrInternalServer
 	}
-	transaction := &MidtransTransaction{
+	transaction := &schema.MidtransTransaction{
 		ID:       transactionID,
 		WalletID: wallet.ID,
 		Amount:   req.Amount,
 		IsCredit: true,
-		Status:   MidtransStatusPending,
+		Status:   schema.MidtransStatusPending,
 	}
 
 	// 4. Create midtrans transaction in database
@@ -58,15 +59,15 @@ func (uc *UseCase) TopUp(ctx context.Context, req *TopUpRequest) (*TopUpResponse
 	return &TopUpResponse{RedirectURL: snapResp.RedirectURL}, nil
 }
 
-func (uc *UseCase) VerifyPayment(transactionID uuid.UUID, status MidtransStatus) error {
-	if status == MidtransStatusSuccess {
+func (uc *UseCase) VerifyPayment(transactionID uuid.UUID, status schema.MidtransStatus) error {
+	if status == schema.MidtransStatusSuccess {
 		if err := uc.repo.TopUpSuccess(transactionID); err != nil {
 			log.Println("Error top up success: ", err)
 			return apierror.ErrInternalServer
 		}
 	} else {
 		if err := uc.repo.UpdateMidtransTransaction(nil,
-			&MidtransTransaction{ID: transactionID, Status: status}); err != nil {
+			&schema.MidtransTransaction{ID: transactionID, Status: status}); err != nil {
 			log.Println("Error update midtrans transaction status: ", err)
 			return apierror.ErrInternalServer
 		}
@@ -115,8 +116,8 @@ func (uc *UseCase) GetMidtransTransactionsByUser(ctx context.Context,
 	}
 
 	for _, v := range midtransTransactions {
-		if v.Status == MidtransStatusPending && v.ExpireAt.Before(time.Now()) {
-			v.Status = MidtransStatusFailure
+		if v.Status == schema.MidtransStatusPending && v.ExpireAt.Before(time.Now()) {
+			v.Status = schema.MidtransStatusFailure
 		}
 	}
 

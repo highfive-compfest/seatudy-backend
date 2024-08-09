@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"gorm.io/gorm"
 )
 
@@ -32,7 +33,7 @@ func (r *repository) Create(user *User) error {
 		if err != nil {
 			return err
 		}
-		return r.walletRepo.Create(tx, &wallet.Wallet{
+		return r.walletRepo.Create(tx, &schema.Wallet{
 			ID:     walletID,
 			UserID: user.ID,
 		})

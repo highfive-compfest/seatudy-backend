@@ -3,6 +3,7 @@ package wallet
 import (
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
@@ -57,19 +58,19 @@ func (muc *MidtransUseCase) VerifyPayment(notificationPayload map[string]any) er
 			if transactionStatusResp.TransactionStatus == "capture" {
 				if transactionStatusResp.FraudStatus == "challenge" {
 					// set transaction status on your database to 'challenge'
-					if err := muc.walletUc.VerifyPayment(transactionId, MidtransStatusChallenge); err != nil {
+					if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusChallenge); err != nil {
 						return apierror.ErrInternalServer
 					}
 					// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
 				} else if transactionStatusResp.FraudStatus == "accept" {
 					// set transaction status on your database to 'success'
-					if err := muc.walletUc.VerifyPayment(transactionId, MidtransStatusSuccess); err != nil {
+					if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusSuccess); err != nil {
 						return apierror.ErrInternalServer
 					}
 				}
 			} else if transactionStatusResp.TransactionStatus == "settlement" {
 				// set transaction status on your databaase to 'success'
-				if err := muc.walletUc.VerifyPayment(transactionId, MidtransStatusSuccess); err != nil {
+				if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusSuccess); err != nil {
 					return apierror.ErrInternalServer
 				}
 			} else if transactionStatusResp.TransactionStatus == "deny" {
@@ -77,12 +78,12 @@ func (muc *MidtransUseCase) VerifyPayment(notificationPayload map[string]any) er
 				// and later can become success
 			} else if transactionStatusResp.TransactionStatus == "cancel" || transactionStatusResp.TransactionStatus == "expire" {
 				// set transaction status on your databaase to 'failure'
-				if err := muc.walletUc.VerifyPayment(transactionId, MidtransStatusFailure); err != nil {
+				if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusFailure); err != nil {
 					return apierror.ErrInternalServer
 				}
 			} else if transactionStatusResp.TransactionStatus == "pending" {
 				// set transaction status on your databaase to 'pending' / waiting payment
-				if err := muc.walletUc.VerifyPayment(transactionId, MidtransStatusPending); err != nil {
+				if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusPending); err != nil {
 					return apierror.ErrInternalServer
 				}
 			}
