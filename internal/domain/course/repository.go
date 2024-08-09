@@ -12,6 +12,7 @@ type Repository interface {
     Create(ctx context.Context, course *Course) error
     Update(ctx context.Context, course *Course) error
     Delete(ctx context.Context, id uuid.UUID) error
+    FindByInstructorID(ctx context.Context, instructorID uuid.UUID) ([]Course, error)
 }
 
 type repository struct {
@@ -24,7 +25,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) GetAll(ctx context.Context) ([]Course, error) {
     var courses []Course
-    if err := r.db.WithContext(ctx).Find(&courses).Error; err != nil {
+    if err := r.db.Preload("Materials.Attachments").Find(&courses).Error; err != nil {
         return nil, err
     }
     return courses, nil
@@ -32,7 +33,7 @@ func (r *repository) GetAll(ctx context.Context) ([]Course, error) {
 
 func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (Course, error) {
     var course Course
-    if err := r.db.WithContext(ctx).First(&course, "id = ?", id).Error; err != nil {
+    if err := r.db.Preload("Materials.Attachments").First(&course, "id = ?", id).Error; err != nil {
         return Course{}, err
     }
     return course, nil
@@ -48,4 +49,12 @@ func (r *repository) Update(ctx context.Context, course *Course) error {
 
 func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
     return r.db.WithContext(ctx).Delete(&Course{}, id).Error
+}
+
+func (r *repository) FindByInstructorID(ctx context.Context, instructorID uuid.UUID) ([]Course, error) {
+    var courses []Course
+    if err := r.db.Where("instructor_id = ?", instructorID).Find(&courses).Error; err != nil {
+        return nil, err
+    }
+    return courses, nil
 }

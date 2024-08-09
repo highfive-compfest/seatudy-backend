@@ -12,5 +12,6 @@ var (
 	ErrForbidden           = ApiError{HttpStatus: http.StatusForbidden, Message: "FORBIDDEN"}
 	ErrFileTooLarge        = ApiError{HttpStatus: http.StatusBadRequest, Message: "FILE_TOO_LARGE"}
 	ErrInvalidFileType     = ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_FILE_TYPE"}
+	ErrInvalidParamId      = ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_PARAM_ID"}
 	ErrInsufficientBalance = ApiError{HttpStatus: http.StatusBadRequest, Message: "INSUFFICIENT_BALANCE"}
 )

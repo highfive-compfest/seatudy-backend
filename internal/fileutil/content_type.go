@@ -18,6 +18,9 @@ var ImageContentTypes = []string{
 	"image/tiff",
 	"image/webp",
 }
+var SyllabusContentTypes = []string{
+	"application/pdf", // MIME type for PDF files
+}
 
 func DetectMultipartFileType(file *multipart.FileHeader) (string, error) {
 	fileContent, err := file.Open()

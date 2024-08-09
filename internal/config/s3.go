@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
+	"net/url"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -26,12 +27,14 @@ func InitializeS3() {
 
 // UploadFile uploads a file to the specified S3 bucket
 // UploadFile uploads a file to the specified S3 bucket
-func UploadFile( key string, fileHeader *multipart.FileHeader) (string, error) {
+func UploadFile(key string, fileHeader *multipart.FileHeader) (string, error) {
 	file, err := fileHeader.Open()
 	if err != nil {
 		return "", fmt.Errorf("unable to open file %q: %v", fileHeader.Filename, err)
 	}
 	defer file.Close()
+
+	encodedKey := url.PathEscape(key)
 
 	_, err = S3Svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(Env.AwsBucketName),
@@ -43,6 +46,6 @@ func UploadFile( key string, fileHeader *multipart.FileHeader) (string, error) {
 	}
 
 	// Construct the permanent URL
-	urlStr := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", Env.AwsBucketName, aws.StringValue(S3Svc.Config.Region), key)
+	urlStr := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", Env.AwsBucketName, aws.StringValue(S3Svc.Config.Region), encodedKey)
 	return urlStr, nil
 }
