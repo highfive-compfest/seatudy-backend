@@ -56,7 +56,6 @@ func (uc *UseCase) Register(req *RegisterRequest) error {
 		PasswordHash:    string(passwordHash),
 		Role:            user.Role(req.Role),
 		ImageURL:        "",
-		Balance:         0,
 	}
 
 	err = uc.userRepo.Create(&userEntity)
