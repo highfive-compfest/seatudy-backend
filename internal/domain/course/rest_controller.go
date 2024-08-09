@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"github.com/highfive-compfest/seatudy-backend/internal/middleware"
 	"github.com/highfive-compfest/seatudy-backend/internal/response"
@@ -62,8 +63,13 @@ func (c *RestController) Create() gin.HandlerFunc {
 		userRole , exists := ctx.Get("user.role")
 
 		log.Print(exists)
-		if !exists || userRole != user.Instructor{
+		if !exists || userRole != "instructor" {
+
+            log.Printf("Type of userRole: %T", userRole)
+            log.Printf("Type of user.Instructor: %T", user.Instructor)
+            log.Printf("Access denied or role not found: %v", userRole != user.Instructor)
             // Logging for debugging
+            log.Printf("Access denied or role not found: %v", user.Instructor)
             log.Printf("Access denied or role not found: %v", userRole)
             response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
             return
@@ -95,7 +101,7 @@ func (c *RestController) Create() gin.HandlerFunc {
 
         err := c.uc.Create(ctx, req, imageFile, syllabusFile,instructorID.(string))
         if err != nil {
-            response.NewRestResponse(http.StatusInternalServerError, "Failed to create course: "+err.Error(), nil).Send(ctx)
+            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
             return
         }
 
@@ -109,7 +115,7 @@ func (c *RestController) Update() gin.HandlerFunc {
         userRole , exists := ctx.Get("user.role")
 
 		log.Print(exists)
-		if !exists || userRole != user.Instructor{
+		if !exists || userRole != "instructor" {
             // Logging for debugging
             log.Printf("Access denied or role not found: %v", userRole)
             response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
@@ -137,7 +143,7 @@ func (c *RestController) Update() gin.HandlerFunc {
         // Call the use case to update the course
         updatedCourse, err := c.uc.Update(ctx.Request.Context(), req, id, imageFile, syllabusFile)
         if err != nil {
-            response.NewRestResponse(http.StatusInternalServerError, "Failed to update course: "+err.Error(), nil).Send(ctx)
+            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
             return
         }
 
@@ -165,7 +171,7 @@ func (c *RestController) Delete() gin.HandlerFunc {
 
         err = c.uc.Delete(ctx, id)
         if err != nil {
-            response.NewRestResponse(http.StatusInternalServerError, err.Error(), nil).Send(ctx)
+            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
             return
         }
         response.NewRestResponse(http.StatusOK, "Course deleted successfully", nil).Send(ctx)
