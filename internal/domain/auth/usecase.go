@@ -11,6 +11,7 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"github.com/highfive-compfest/seatudy-backend/internal/jwtoken"
 	"github.com/highfive-compfest/seatudy-backend/internal/mailer"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
@@ -48,13 +49,13 @@ func (uc *UseCase) Register(req *RegisterRequest) error {
 		return apierror.ErrInternalServer
 	}
 
-	userEntity := user.User{
+	userEntity := schema.User{
 		ID:              id,
 		Email:           req.Email,
 		IsEmailVerified: false,
 		Name:            req.Name,
 		PasswordHash:    string(passwordHash),
-		Role:            user.Role(req.Role),
+		Role:            schema.Role(req.Role),
 		ImageURL:        "",
 	}
 
@@ -237,7 +238,7 @@ func (uc *UseCase) VerifyOTP(ctx context.Context, req *VerifyEmailRequest) error
 		return apierror.ErrInternalServer
 	}
 
-	if err := uc.userRepo.UpdateByEmail(email, &user.User{IsEmailVerified: true}); err != nil {
+	if err := uc.userRepo.UpdateByEmail(email, &schema.User{IsEmailVerified: true}); err != nil {
 		log.Println("Error updating user email verification status: ", err)
 		return apierror.ErrInternalServer
 	}
@@ -316,7 +317,7 @@ func (uc *UseCase) ResetPassword(ctx context.Context, req *ResetPasswordRequest)
 		return apierror.ErrInternalServer
 	}
 
-	err = uc.userRepo.UpdateByEmail(req.Email, &user.User{PasswordHash: string(passwordHash)})
+	err = uc.userRepo.UpdateByEmail(req.Email, &schema.User{PasswordHash: string(passwordHash)})
 	if err != nil {
 		log.Println("Error updating user password: ", err)
 		return apierror.ErrInternalServer
@@ -353,7 +354,7 @@ func (uc *UseCase) ChangePassword(ctx context.Context, req *ChangePasswordReques
 		return apierror.ErrInternalServer
 	}
 
-	err = uc.userRepo.UpdateByEmail(email, &user.User{PasswordHash: string(passwordHash)})
+	err = uc.userRepo.UpdateByEmail(email, &schema.User{PasswordHash: string(passwordHash)})
 	if err != nil {
 		log.Println("Error updating user password: ", err)
 		return apierror.ErrInternalServer

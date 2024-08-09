@@ -8,11 +8,11 @@ import (
 )
 
 type Repository interface {
-	Create(user *User) error
-	GetByID(id uuid.UUID) (*User, error)
-	GetByEmail(email string) (*User, error)
-	Update(user *User) error
-	UpdateByEmail(email string, user *User) error
+	Create(user *schema.User) error
+	GetByID(id uuid.UUID) (*schema.User, error)
+	GetByEmail(email string) (*schema.User, error)
+	Update(user *schema.User) error
+	UpdateByEmail(email string, user *schema.User) error
 }
 
 type repository struct {
@@ -24,7 +24,7 @@ func NewRepository(db *gorm.DB, walletRepo wallet.IRepository) Repository {
 	return &repository{db, walletRepo}
 }
 
-func (r *repository) Create(user *User) error {
+func (r *repository) Create(user *schema.User) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(user).Error; err != nil {
 			return err
@@ -40,23 +40,23 @@ func (r *repository) Create(user *User) error {
 	})
 }
 
-func (r *repository) GetByID(id uuid.UUID) (*User, error) {
-	var user User
+func (r *repository) GetByID(id uuid.UUID) (*schema.User, error) {
+	var user schema.User
 	if err := r.db.First(&user, id).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *repository) GetByEmail(email string) (*User, error) {
-	var user User
+func (r *repository) GetByEmail(email string) (*schema.User, error) {
+	var user schema.User
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *repository) Update(user *User) error {
+func (r *repository) Update(user *schema.User) error {
 	tx := r.db.Updates(user)
 	if tx.Error != nil {
 		return tx.Error
@@ -67,7 +67,7 @@ func (r *repository) Update(user *User) error {
 	return nil
 }
 
-func (r *repository) UpdateByEmail(email string, user *User) error {
+func (r *repository) UpdateByEmail(email string, user *schema.User) error {
 	tx := r.db.Where("email = ?", email).Updates(user)
 	if tx.Error != nil {
 		return tx.Error

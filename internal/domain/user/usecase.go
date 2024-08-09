@@ -7,6 +7,7 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
 	"github.com/highfive-compfest/seatudy-backend/internal/config"
 	"github.com/highfive-compfest/seatudy-backend/internal/fileutil"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"gorm.io/gorm"
 	"log"
 	"slices"
@@ -95,7 +96,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 		}
 	}
 
-	userEntity := User{
+	userEntity := schema.User{
 		ID:       userID,
 		Name:     req.Name,
 		ImageURL: imageUrl,

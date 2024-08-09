@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 )
 
 type RegisterRequest struct {
@@ -17,9 +17,9 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	AccessToken  string     `json:"access_token"`
-	RefreshToken string     `json:"refresh_token"`
-	User         *user.User `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	User         *schema.User `json:"user"`
 }
 
 type RefreshRequest struct {
