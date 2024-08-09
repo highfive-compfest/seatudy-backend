@@ -38,8 +38,15 @@ func main() {
 
 	config.InitializeS3()
 
+	// Wallet
+	walletRepo := wallet.NewRepository(db)
+	walletUseCase := wallet.NewUseCase(walletRepo, nil)
+	midtUseCase := wallet.NewMidtransUseCase(walletUseCase)
+	walletUseCase.MidtUc = midtUseCase
+	wallet.NewRestController(engine, walletUseCase, midtUseCase)
+
 	// User
-	userRepo := user.NewRepository(db)
+	userRepo := user.NewRepository(db, walletRepo)
 	userUseCase := user.NewUseCase(userRepo)
 	user.NewRestController(engine, userUseCase)
 
@@ -51,7 +58,7 @@ func main() {
 	// Course
 	courseRepo := course.NewRepository(db)
 	courseUseCase := course.NewUseCase(courseRepo)
-	course.NewRestController(engine,courseUseCase)
+	course.NewRestController(engine, courseUseCase)
 
 	if err := engine.Run(":" + config.Env.Port); err != nil {
 		log.Fatalln(err)
