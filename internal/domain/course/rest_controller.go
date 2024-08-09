@@ -65,12 +65,6 @@ func (c *RestController) Create() gin.HandlerFunc {
 		log.Print(exists)
 		if !exists || userRole != "instructor" {
 
-            log.Printf("Type of userRole: %T", userRole)
-            log.Printf("Type of user.Instructor: %T", user.Instructor)
-            log.Printf("Access denied or role not found: %v", userRole != user.Instructor)
-            // Logging for debugging
-            log.Printf("Access denied or role not found: %v", user.Instructor)
-            log.Printf("Access denied or role not found: %v", userRole)
             response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
             return
         }
