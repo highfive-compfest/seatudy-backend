@@ -9,6 +9,7 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/fileutil"
 	"gorm.io/gorm"
 	"log"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -87,6 +88,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 			"users/avatar/"+userID.String()+"."+strings.Split(fileType, "/")[1],
 			req.ImageFile,
 		)
+
 		if err != nil {
 			log.Println("Error uploading image: ", err)
 			return apierror.ErrInternalServer
@@ -96,7 +98,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 	userEntity := User{
 		ID:       userID,
 		Name:     req.Name,
-		ImageURL: imageUrl,
+		ImageURL: url.QueryEscape(imageUrl),
 	}
 
 	if err := uc.repo.Update(&userEntity); err != nil {
