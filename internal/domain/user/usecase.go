@@ -41,13 +41,14 @@ func (uc *UseCase) GetByID(req *GetUserByIDRequest) (*GetUserResponse, error) {
 	}
 
 	return &GetUserResponse{
-		ID:        user.ID.String(),
-		Email:     user.Email,
-		Name:      user.Name,
-		ImageURL:  user.ImageURL,
-		Role:      string(user.Role),
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		ID:              user.ID.String(),
+		Email:           user.Email,
+		Name:            user.Name,
+		ImageURL:        user.ImageURL,
+		Role:            string(user.Role),
+		IsEmailVerified: user.IsEmailVerified,
+		CreatedAt:       user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       user.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
