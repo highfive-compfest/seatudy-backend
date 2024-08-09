@@ -13,10 +13,11 @@ import (
 )
 
 type RestController struct {
-    uc *UseCase
+	uc *UseCase
 }
 
 func NewRestController(router *gin.Engine, uc *UseCase) {
+
     controller := &RestController{uc: uc}
 
     courseGroup := router.Group("/v1/courses")
@@ -28,17 +29,19 @@ func NewRestController(router *gin.Engine, uc *UseCase) {
         courseGroup.GET("/instructor/:id", middleware.Authenticate(), controller.GetInstructorCourse())
         courseGroup.DELETE("/:id",middleware.Authenticate(), controller.Delete())
     }
+
+
 }
 
 func (c *RestController) GetAll() gin.HandlerFunc {
-    return func(ctx *gin.Context) {
-        courses, err := c.uc.GetAll(ctx)
-        if err != nil {
-            response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve courses", nil).Send(ctx)
-            return
-        }
-        response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", courses).Send(ctx)
-    }
+	return func(ctx *gin.Context) {
+		courses, err := c.uc.GetAll(ctx)
+		if err != nil {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve courses", nil).Send(ctx)
+			return
+		}
+		response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", courses).Send(ctx)
+	}
 }
 
 func (c *RestController) GetInstructorCourse() gin.HandlerFunc{
@@ -67,133 +70,133 @@ func (c *RestController) GetInstructorCourse() gin.HandlerFunc{
 
 
 func (c *RestController) GetByID() gin.HandlerFunc {
-    return func(ctx *gin.Context) {
-        id, err := uuid.Parse(ctx.Param("id"))
-        if err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
-            return
-        }
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
+			return
+		}
 
-        course, err := c.uc.GetByID(ctx, id)
-        if err != nil {
-            response.NewRestResponse(http.StatusInternalServerError, err.Error(), nil).Send(ctx)
-            return
-        }
-        response.NewRestResponse(http.StatusOK, "Course retrieved successfully", course).Send(ctx)
-    }
+		course, err := c.uc.GetByID(ctx, id)
+		if err != nil {
+			response.NewRestResponse(http.StatusInternalServerError, err.Error(), nil).Send(ctx)
+			return
+		}
+		response.NewRestResponse(http.StatusOK, "Course retrieved successfully", course).Send(ctx)
+	}
 }
 
 func (c *RestController) Create() gin.HandlerFunc {
-    return func(ctx *gin.Context) {
+	return func(ctx *gin.Context) {
 
-		userRole , exists := ctx.Get("user.role")
+		userRole, exists := ctx.Get("user.role")
 
 		log.Print(exists)
 		if !exists || userRole != "instructor" {
 
-            response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
-            return
-        }
+			response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
+			return
+		}
 
-        var req CreateCourseRequest
-        if err := ctx.ShouldBind(&req); err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid course data: "+err.Error(), nil).Send(ctx)
-            return
-        }
+		var req CreateCourseRequest
+		if err := ctx.ShouldBind(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid course data: "+err.Error(), nil).Send(ctx)
+			return
+		}
 
-        imageFile, errImage := ctx.FormFile("image")
-        if errImage != nil && errImage != http.ErrMissingFile {
-            response.NewRestResponse(http.StatusBadRequest, "Could not retrieve image file", nil).Send(ctx)
-            return
-        }
+		imageFile, errImage := ctx.FormFile("image")
+		if errImage != nil && errImage != http.ErrMissingFile {
+			response.NewRestResponse(http.StatusBadRequest, "Could not retrieve image file", nil).Send(ctx)
+			return
+		}
 
-        syllabusFile, errSyllabus := ctx.FormFile("syllabus")
-        if errSyllabus != nil && errSyllabus != http.ErrMissingFile {
-            response.NewRestResponse(http.StatusBadRequest, "Could not retrieve syllabus file", nil).Send(ctx)
-            return
-        }
+		syllabusFile, errSyllabus := ctx.FormFile("syllabus")
+		if errSyllabus != nil && errSyllabus != http.ErrMissingFile {
+			response.NewRestResponse(http.StatusBadRequest, "Could not retrieve syllabus file", nil).Send(ctx)
+			return
+		}
 
 		instructorID, exists := ctx.Get("user.id")
-        if !exists {
-            response.NewRestResponse(http.StatusInternalServerError, "Failed to get instructor ID from context", nil).Send(ctx)
-            return
-        }
+		if !exists {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to get instructor ID from context", nil).Send(ctx)
+			return
+		}
 
-        err := c.uc.Create(ctx, req, imageFile, syllabusFile,instructorID.(string))
-        if err != nil {
-            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
-            return
-        }
+		err := c.uc.Create(ctx, req, imageFile, syllabusFile, instructorID.(string))
+		if err != nil {
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			return
+		}
 
-        response.NewRestResponse(http.StatusCreated, "Course created successfully", nil).Send(ctx)
-    }
+		response.NewRestResponse(http.StatusCreated, "Course created successfully", nil).Send(ctx)
+	}
 }
 
 func (c *RestController) Update() gin.HandlerFunc {
-    return func(ctx *gin.Context) {
-        // Ensure user role is "instructor"
-        userRole , exists := ctx.Get("user.role")
+	return func(ctx *gin.Context) {
+		// Ensure user role is "instructor"
+		userRole, exists := ctx.Get("user.role")
 
 		log.Print(exists)
 		if !exists || userRole != "instructor" {
-            // Logging for debugging
-            log.Printf("Access denied or role not found: %v", userRole)
-            response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
-            return
-        }
+			// Logging for debugging
+			log.Printf("Access denied or role not found: %v", userRole)
+			response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
+			return
+		}
 
-        // Parse UUID from the URL parameter
-        id, err := uuid.Parse(ctx.Param("id"))
-        if err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
-            return
-        }
+		// Parse UUID from the URL parameter
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
+			return
+		}
 
-        // Bind JSON payload to UpdateCourseRequest struct
-        var req UpdateCourseRequest
-        if err := ctx.ShouldBind(&req); err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid course data: "+err.Error(), nil).Send(ctx)
-            return
-        }
+		// Bind JSON payload to UpdateCourseRequest struct
+		var req UpdateCourseRequest
+		if err := ctx.ShouldBind(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid course data: "+err.Error(), nil).Send(ctx)
+			return
+		}
 
-        // Handle optional file uploads
-        imageFile, _ := ctx.FormFile("image")
-        syllabusFile, _ := ctx.FormFile("syllabus")
+		// Handle optional file uploads
+		imageFile, _ := ctx.FormFile("image")
+		syllabusFile, _ := ctx.FormFile("syllabus")
 
-        // Call the use case to update the course
-        updatedCourse, err := c.uc.Update(ctx.Request.Context(), req, id, imageFile, syllabusFile)
-        if err != nil {
-            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
-            return
-        }
+		// Call the use case to update the course
+		updatedCourse, err := c.uc.Update(ctx.Request.Context(), req, id, imageFile, syllabusFile)
+		if err != nil {
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			return
+		}
 
-        // Successfully updated the course
-        response.NewRestResponse(http.StatusOK, "Course updated successfully", updatedCourse).Send(ctx)
-    }
+		// Successfully updated the course
+		response.NewRestResponse(http.StatusOK, "Course updated successfully", updatedCourse).Send(ctx)
+	}
 }
 
 func (c *RestController) Delete() gin.HandlerFunc {
-    return func(ctx *gin.Context) {
-		userRole , exists := ctx.Get("user.role")
+	return func(ctx *gin.Context) {
+		userRole, exists := ctx.Get("user.role")
 
 		log.Print(exists)
-		if !exists || userRole != user.Instructor{
-            // Logging for debugging
-            log.Printf("Access denied or role not found: %v", userRole)
-            response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
-            return
-        }
-        id, err := uuid.Parse(ctx.Param("id"))
-        if err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
-            return
-        }
+		if !exists || userRole != user.Instructor {
+			// Logging for debugging
+			log.Printf("Access denied or role not found: %v", userRole)
+			response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
+			return
+		}
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
+			return
+		}
 
-        err = c.uc.Delete(ctx, id)
-        if err != nil {
-            response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
-            return
-        }
-        response.NewRestResponse(http.StatusOK, "Course deleted successfully", nil).Send(ctx)
-    }
+		err = c.uc.Delete(ctx, id)
+		if err != nil {
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			return
+		}
+		response.NewRestResponse(http.StatusOK, "Course deleted successfully", nil).Send(ctx)
+	}
 }
