@@ -126,6 +126,10 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
     return uc.courseRepo.Create(ctx, &course)
 }
 
+func (uc *UseCase) GetByInstructorID(ctx context.Context, instructorID uuid.UUID) ([]Course, error) {
+    return uc.courseRepo.FindByInstructorID(ctx, instructorID)
+}
+
 func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.UUID, imageFile, syllabusFile *multipart.FileHeader) (Course, error) {
     // Fetch the existing course to update
     course, err := uc.courseRepo.GetByID(ctx, id)

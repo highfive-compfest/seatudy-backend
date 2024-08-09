@@ -12,6 +12,7 @@ type Repository interface {
     Create(ctx context.Context, course *Course) error
     Update(ctx context.Context, course *Course) error
     Delete(ctx context.Context, id uuid.UUID) error
+    FindByInstructorID(ctx context.Context, instructorID uuid.UUID) ([]Course, error)
 }
 
 type repository struct {
@@ -48,4 +49,12 @@ func (r *repository) Update(ctx context.Context, course *Course) error {
 
 func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
     return r.db.WithContext(ctx).Delete(&Course{}, id).Error
+}
+
+func (r *repository) FindByInstructorID(ctx context.Context, instructorID uuid.UUID) ([]Course, error) {
+    var courses []Course
+    if err := r.db.Where("instructor_id = ?", instructorID).Find(&courses).Error; err != nil {
+        return nil, err
+    }
+    return courses, nil
 }
