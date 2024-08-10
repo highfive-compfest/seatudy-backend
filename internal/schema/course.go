@@ -21,7 +21,7 @@ type Course struct {
 	Title        string           `json:"title" gorm:"type:varchar(100);not null"`
 	Description  string           `json:"description" gorm:"type:varchar(1000)"`
 	Price        float32          `json:"price" gorm:"type:numeric(11,2);not null"`
-	Rating       float32          `json:"rating" gorm:"type:numeric(2,1);default:0.0;not null;check:rating >= 1.0 AND rating <= 5.0;index"`
+	Rating       float32          `json:"rating" gorm:"type:numeric(2,1);default:0.0;not null;check:rating >= 0.0 AND rating <= 5.0;index"`
 	ReviewCount  int64            `json:"review_count" gorm:"type:bigint;default:0;not null"`
 	ImageURL     string           `json:"image_url" gorm:"type:text"`
 	SyllabusURL  string           `json:"syllabus_url" gorm:"type:text"`
