@@ -1,7 +1,6 @@
 package course
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"log"
 	"net/http"
 
@@ -27,7 +26,11 @@ func NewRestController(router *gin.Engine, uc *UseCase) {
 		courseGroup.POST("", middleware.Authenticate(), controller.Create())
 		courseGroup.PUT("/:id", middleware.Authenticate(), controller.Update())
 		courseGroup.GET("/instructor/:id", middleware.Authenticate(), controller.GetInstructorCourse())
-		courseGroup.DELETE("/:id", middleware.Authenticate(), controller.Delete())
+		courseGroup.DELETE("/:id",
+			middleware.Authenticate(),
+			middleware.RequireRole("instructor"),
+			controller.Delete(),
+		)
 	}
 
 }
@@ -175,15 +178,6 @@ func (c *RestController) Update() gin.HandlerFunc {
 
 func (c *RestController) Delete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		userRole, exists := ctx.Get("user.role")
-
-		log.Print(exists)
-		if !exists || userRole != schema.RoleInstructor {
-			// Logging for debugging
-			log.Printf("Access denied or role not found: %v", userRole)
-			response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create courses", nil).Send(ctx)
-			return
-		}
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
 			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
