@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/attachment"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/material"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/review"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"log"
@@ -31,6 +32,7 @@ func main() {
 		&schema.Course{},
 		&schema.Material{},
 		&schema.Attachment{},
+		&schema.Review{},
 	)
 	rds := config.NewRedis()
 
@@ -73,6 +75,11 @@ func main() {
 	materialRepo := material.NewRepository(db)
 	materialUsecase := material.NewUseCase(materialRepo, attachmentUseCase)
 	material.NewRestController(engine, materialUsecase, courseUseCase)
+
+	// Review
+	reviewRepo := review.NewRepository(db)
+	reviewUseCase := review.NewUseCase(reviewRepo, courseRepo)
+	review.NewRestController(engine, reviewUseCase)
 
 	if err := engine.Run(":" + config.Env.Port); err != nil {
 		log.Fatalln(err)
