@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
@@ -45,6 +46,7 @@ func (r *repository) GetByID(id uuid.UUID) (*schema.User, error) {
 	if err := r.db.First(&user, id).Error; err != nil {
 		return nil, err
 	}
+
 	return &user, nil
 }
 
@@ -53,6 +55,23 @@ func (r *repository) GetByEmail(email string) (*schema.User, error) {
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
+
+	// LEGACY SUPPORT FOR DEVELOPMENT: When login, check if user has wallet
+	if _, err := r.walletRepo.GetByUserID(nil, user.ID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			walletID, err := uuid.NewV7()
+			if err != nil {
+				return nil, err
+			}
+			if err := r.walletRepo.Create(nil, &schema.Wallet{
+				ID:     walletID,
+				UserID: user.ID,
+			}); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return &user, nil
 }
 

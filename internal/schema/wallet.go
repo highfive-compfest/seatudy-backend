@@ -7,7 +7,7 @@ import (
 
 type Wallet struct {
 	ID                   uuid.UUID             `gorm:"primaryKey"`
-	UserID               uuid.UUID             `gorm:"not null;index"`
+	UserID               uuid.UUID             `gorm:"not null;unique;index"`
 	Balance              int64                 `gorm:"not null; default:0; check:balance >= 0"`
 	MidtransTransactions []MidtransTransaction `gorm:"foreignKey:WalletID"`
 }
