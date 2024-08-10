@@ -12,15 +12,30 @@ import (
 	"log"
 	"slices"
 	"strings"
-	"time"
 )
 
 type UseCase struct {
-	repo Repository
+	repo IRepository
 }
 
-func NewUseCase(repo Repository) *UseCase {
+func NewUseCase(repo IRepository) *UseCase {
 	return &UseCase{repo: repo}
+}
+
+func (uc *UseCase) GetMe(ctx context.Context) (*schema.User, error) {
+	userID, err := uuid.Parse(ctx.Value("user.id").(string))
+	if err != nil {
+		log.Println("Error parsing uuid from jwt: ", err)
+		return nil, apierror.ErrInternalServer
+	}
+
+	user, err := uc.repo.GetByID(userID)
+	if err != nil {
+		log.Println("Error getting user by id: ", err)
+		return nil, apierror.ErrInternalServer
+	}
+
+	return user, nil
 }
 
 func (uc *UseCase) GetByID(req *GetUserByIDRequest) (*GetUserResponse, error) {
@@ -41,14 +56,10 @@ func (uc *UseCase) GetByID(req *GetUserByIDRequest) (*GetUserResponse, error) {
 	}
 
 	return &GetUserResponse{
-		ID:              user.ID.String(),
-		Email:           user.Email,
-		Name:            user.Name,
-		ImageURL:        user.ImageURL,
-		Role:            string(user.Role),
-		IsEmailVerified: user.IsEmailVerified,
-		CreatedAt:       user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:       user.UpdatedAt.Format(time.RFC3339),
+		ID:       user.ID.String(),
+		Name:     user.Name,
+		ImageURL: user.ImageURL,
+		Role:     string(user.Role),
 	}, nil
 }
 

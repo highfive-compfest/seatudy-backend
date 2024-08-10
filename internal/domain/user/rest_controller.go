@@ -52,9 +52,7 @@ func (c *RestController) GetByID() gin.HandlerFunc {
 
 func (c *RestController) GetMe() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req := GetUserByIDRequest{ID: ctx.Value("user.id").(string)}
-
-		res, err := c.uc.GetByID(&req)
+		res, err := c.uc.GetMe(ctx)
 		if err != nil {
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
 			return
