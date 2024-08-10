@@ -1,6 +1,8 @@
 package schema
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type Attachment struct {
 	ID          uuid.UUID `json:"id" gorm:"primaryKey"`
