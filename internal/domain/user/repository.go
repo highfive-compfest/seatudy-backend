@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Repository interface {
+type IRepository interface {
 	Create(user *schema.User) error
 	GetByID(id uuid.UUID) (*schema.User, error)
 	GetByEmail(email string) (*schema.User, error)
@@ -20,7 +20,7 @@ type repository struct {
 	walletRepo wallet.IRepository
 }
 
-func NewRepository(db *gorm.DB, walletRepo wallet.IRepository) Repository {
+func NewRepository(db *gorm.DB, walletRepo wallet.IRepository) IRepository {
 	return &repository{db, walletRepo}
 }
 
