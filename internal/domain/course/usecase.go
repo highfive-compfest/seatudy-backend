@@ -40,6 +40,18 @@ func (uc *UseCase) GetAll(ctx context.Context, page, pageSize int) (CoursesPagin
     }, nil
 }
 
+func (uc *UseCase) GetCourseByPopularity(ctx context.Context, page, pageSize int) (CoursesPaginatedResponse, error) {
+    courses, total, err := uc.courseRepo.FindByPopularity(ctx, page, pageSize)
+    if err != nil {
+        return CoursesPaginatedResponse{}, err
+    }
+    pag := pagination.NewPagination(total, page, pageSize)
+    return CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pag,
+    }, nil
+}
+
 func (uc *UseCase) GetByInstructorID(ctx context.Context, instructorID uuid.UUID, page, pageSize int) (CoursesPaginatedResponse, error) {
     courses, total, err := uc.courseRepo.FindByInstructorID(ctx, instructorID, page, pageSize)
     if err != nil {
@@ -272,6 +284,31 @@ func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId 
     
     return nil
 }
+
+func (uc *UseCase) GetEnrollmentsByCourse(ctx context.Context, id uuid.UUID)  ([]schema.User, error) {
+	users, err := uc.courseEnrollUseCase.GetEnrollmentsByCourse(ctx,id)
+
+	if err != nil {
+        return nil, err  // Return an error if it occurs
+    }
+	return users, nil
+}
+
+func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string)  ([]schema.Course, error) {
+	studentUUID, err := uuid.Parse(id)
+    if err != nil {
+        
+        return nil,apierror.ErrInternalServer
+    }
+	courses, err := uc.courseEnrollUseCase.GetEnrollmentsByUser(ctx,studentUUID)
+
+	if err != nil {
+        return nil, err  // Return an error if it occurs
+    }
+	return courses, nil
+}
+
+
 
 func (uc *UseCase) Delete(ctx context.Context, id uuid.UUID) error {
 	return uc.courseRepo.Delete(ctx, id)
