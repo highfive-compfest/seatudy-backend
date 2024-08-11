@@ -22,7 +22,7 @@ func NewUseCase(repo Repository) *UseCase {
 	return &UseCase{repo: repo}
 }
 
-func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string) (schema.Attachment, error) {
+func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string,materialID uuid.UUID) (schema.Attachment, error) {
 	// Validate file type
 	// fileType, err := fileutil.DetectMultipartFileType(fileHeader)
 
@@ -59,6 +59,7 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 		ID:          id,
 		URL:         fileURL,
 		Description: description,
+		MaterialID: materialID,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
 		return schema.Attachment{}, apierror.ErrInternalServer

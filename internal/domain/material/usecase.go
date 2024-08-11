@@ -41,21 +41,21 @@ func (uc *UseCase) CreateMaterial(ctx context.Context, req CreateMaterialRequest
 		Description: req.Description,
 	}
 
-	log.Println("halo masuk attachemnt")
 
-	log.Println(req.Attachments)
 
-	for _, attachmentInput := range req.Attachments {
-		attachment, err := uc.attachmentUseCase.CreateAttachment(ctx, attachmentInput.File, attachmentInput.Description)
-		if err != nil {
-			log.Print("failed")
-			return ErrS3UploadFail
-		}
+	// log.Println(req.Attachments)
 
-		log.Println("keluuar attacment", attachment)
-		// The attachment is now directly linked to the material by MaterialID
-		mat.Attachments = append(mat.Attachments, attachment)
-	}
+	// for _, attachmentInput := range req.Attachments {
+		// attachment, err := uc.attachmentUseCase.CreateAttachment(ctx, attachmentInput.File, attachmentInput.Description)
+		// if err != nil {
+		// 	log.Print("failed")
+		// 	return ErrS3UploadFail
+		// }
+
+		// log.Println("keluuar attacment", attachment)
+		// // The attachment is now directly linked to the material by MaterialID
+		// mat.Attachments = append(mat.Attachments, attachment)
+	// }
 
 	// Save the material with its attachments
 	return uc.repo.Create(ctx, &mat)
@@ -83,17 +83,26 @@ func (uc *UseCase) UpdateMaterial(ctx context.Context, req UpdateMaterialRequest
 		mat.Description = *req.Description
 	}
 
-	// Handle attachments update
-	for _, attachmentInput := range req.Attachments {
-		if attachmentInput.File != nil {
-			attachment, err := uc.attachmentUseCase.CreateAttachment(ctx, attachmentInput.File, attachmentInput.Description)
-			if err != nil {
+	return uc.repo.Update(ctx, mat)
+}
 
-				return ErrS3UploadFail
-			}
-			mat.Attachments = append(mat.Attachments, attachment)
-		}
+func (uc *UseCase) AddAttachment(ctx context.Context, id uuid.UUID, req AttachmentInput) error {
+	mat, err := uc.repo.GetByID(ctx, id)
+	if err != nil {
+		return ErrMaterialNotFound
 	}
+
+	if req.File != nil {
+
+		attachment, err := uc.attachmentUseCase.CreateAttachment(ctx, req.File, req.Description,id)
+		if err != nil {
+
+			return ErrS3UploadFail
+		}
+		mat.Attachments = append(mat.Attachments, attachment)
+	}
+
+
 	return uc.repo.Update(ctx, mat)
 }
 
