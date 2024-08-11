@@ -16,6 +16,7 @@ type Repository interface {
 	Update(ctx context.Context, course *schema.Course) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	FindByInstructorID(ctx context.Context, instructorID uuid.UUID, page, pageSize int) ([]schema.Course, int, error)
+	FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error)
 }
 
 type repository struct {
@@ -35,6 +36,18 @@ func (r *repository) GetAll(ctx context.Context, page, pageSize int) ([]schema.C
     var totalRecords int64
     r.db.Model(&schema.Course{}).Count(&totalRecords)
     return courses, int(totalRecords), nil
+}
+
+func (r *repository) FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error) {
+    var courses []schema.Course
+    result := r.db.Order("rating DESC").Preload("Materials.Attachments").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
+    if result.Error != nil {
+        return nil,0, result.Error
+    }
+
+	var totalRecords int64
+    r.db.Model(&schema.Course{}).Count(&totalRecords)
+    return courses,int(totalRecords), nil
 }
 
 func (r *repository) FindByInstructorID(ctx context.Context, instructorID uuid.UUID, page, pageSize int) ([]schema.Course, int, error) {

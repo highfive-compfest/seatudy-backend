@@ -1,6 +1,7 @@
 package course
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,10 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 			middleware.RequireRole("instructor"),
 			controller.Delete(),
 		)
+
+		courseGroup.GET("/popularity", controller.GetByPopularity())
+		courseGroup.GET("/mycourse",middleware.Authenticate(), controller.GetUserEnrollments())
+		courseGroup.GET("/usersEnroll/:courseId",middleware.Authenticate(), controller.GetCourseEnrollments() )
 	}
 
 }
@@ -52,6 +57,23 @@ func (c *RestController) GetAll() gin.HandlerFunc {
 		response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", result).Send(ctx)
 	}
 }
+
+func (c *RestController) GetByPopularity() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req PaginationRequest
+        if err := ctx.ShouldBindQuery(&req); err != nil {
+            response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
+            return
+        }
+		result, err := c.uc.GetCourseByPopularity(ctx,req.Page, req.Limit)
+		if err != nil {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve courses", nil).Send(ctx)
+			return
+		}
+		response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", result).Send(ctx)
+	}
+}
+
 
 func (c *RestController) GetInstructorCourse() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -81,6 +103,54 @@ func (c *RestController) GetInstructorCourse() gin.HandlerFunc {
 		}
 
 		response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", result).Send(ctx)
+	}
+}
+
+func (c *RestController) GetCourseEnrollments() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		courseID, err := uuid.Parse(ctx.Param("courseId"))
+		if err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid course ID", nil).Send(ctx)
+			return
+		}
+
+		users, err := c.uc.GetEnrollmentsByCourse(ctx, courseID)
+		if err != nil {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve enrollments", err.Error()).Send(ctx)
+			return
+		}
+
+		log.Println(users)
+
+		if len(users) == 0 {
+			response.NewRestResponse(http.StatusOK, "No enrollments found for this course", nil).Send(ctx)
+			return
+		}
+
+		response.NewRestResponse(http.StatusOK, "Enrollments retrieved successfully", users).Send(ctx)
+	}
+}
+
+func (c *RestController) GetUserEnrollments() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		
+		studentID, exists := ctx.Get("user.id")
+		if !exists {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to get student ID from context", nil).Send(ctx)
+			return
+		}
+		courses, err := c.uc.GetEnrollmentsByUser(ctx, studentID.(string))
+		if err != nil {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve enrollments", err.Error()).Send(ctx)
+			return
+		}
+
+		if len(courses) == 0 {
+			response.NewRestResponse(http.StatusOK, "User not have purchased course", nil).Send(ctx)
+			return
+		}
+
+		response.NewRestResponse(http.StatusOK, "Enrollments retrieved successfully", courses).Send(ctx)
 	}
 }
 
