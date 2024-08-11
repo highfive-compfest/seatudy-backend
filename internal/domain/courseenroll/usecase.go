@@ -31,12 +31,12 @@ func (uc *UseCase) EnrollStudent(ctx context.Context, userID, courseID uuid.UUID
     return uc.repo.Create(ctx, &enroll)
 }
 
-func (uc *UseCase) GetEnrollmentsByCourse(ctx context.Context, courseID uuid.UUID) ([]schema.CourseEnroll, error) {
-    return uc.repo.GetByCourseID(ctx, courseID)
+func (uc *UseCase) GetEnrollmentsByCourse(ctx context.Context, courseID uuid.UUID) ([]schema.User, error) {
+    return uc.repo.GetUsersByCourseID(ctx, courseID)
 }
 
-func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, userID uuid.UUID) ([]schema.CourseEnroll, error) {
-    return uc.repo.GetByUserID(ctx, userID)
+func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, userID uuid.UUID) ([]schema.Course, error) {
+    return uc.repo.GetCoursesByUserID(ctx, userID)
 }
 
 func (uc *UseCase) CheckEnrollment(ctx context.Context, userID, courseID uuid.UUID) (bool, error) {
