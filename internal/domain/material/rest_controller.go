@@ -3,7 +3,6 @@
 package material
 
 import (
-	"fmt"
 
 	"net/http"
 
@@ -26,24 +25,19 @@ func NewRestController(r *gin.Engine, uc *UseCase, cuc *course.UseCase) {
 
 	materialGroup := r.Group("/v1/materials")
 	{
-		materialGroup.POST("", middleware.Authenticate(), c.create)
+		materialGroup.POST("", middleware.Authenticate(),middleware.RequireRole("instructor") ,c.create)
 		materialGroup.GET("/:id", c.getByID)
 		materialGroup.GET("/course/:id", c.getMaterialByCourse)
 		materialGroup.GET("", c.getAll)
-		materialGroup.PUT("/:id", middleware.Authenticate(), c.update)
-		materialGroup.DELETE("/:id", middleware.Authenticate(), c.delete)
+		materialGroup.PUT("/:id", middleware.Authenticate(),middleware.RequireRole("instructor"), c.update)
+		materialGroup.DELETE("/:id", middleware.Authenticate(),middleware.RequireRole("instructor"), c.delete)
+		materialGroup.POST("addAttachment/:id", middleware.Authenticate(), middleware.RequireRole("instructor"), c.addAttachment)
 	}
 
 }
 
 func (c *RestController) create(ctx *gin.Context) {
 
-	userRole, exists := ctx.Get("user.role")
-
-	if !exists || userRole != "instructor" {
-		response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create material", nil).Send(ctx)
-		return
-	}
 
 	var req CreateMaterialRequest
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -65,14 +59,7 @@ func (c *RestController) create(ctx *gin.Context) {
 		response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 	}
 
-	attachments, err := extractAttachments(ctx)
 
-	if err != nil {
-		response.NewRestResponse(http.StatusInternalServerError, "Failed to fetch attachment: "+err.Error(), nil).Send(ctx)
-		return
-	}
-
-	req.Attachments = attachments
 	course, err := c.courseUseCase.GetByID(ctx, courseId)
 	if err != nil {
 		response.NewRestResponse(http.StatusInternalServerError, "Failed to fetch material: "+err.Error(), nil).Send(ctx)
@@ -135,34 +122,24 @@ func (c *RestController) getMaterialByCourse(ctx *gin.Context) {
 }
 func (c *RestController) update(ctx *gin.Context) {
 
-	userRole, exists := ctx.Get("user.role")
-
-	if !exists || userRole != "instructor" {
-		response.NewRestResponse(http.StatusForbidden, "Only instructors are allowed to create material", nil).Send(ctx)
+	id, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		err = apierror.ErrInvalidParamId
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
 		return
 	}
+
+	err = c.verifyMaterialOwnership(ctx, id)
+    if err != nil {
+        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+        return
+    }
 
 	var req UpdateMaterialRequest
 	if err := ctx.ShouldBind(&req); err != nil {
 		response.NewRestResponse(http.StatusBadRequest, "Invalid material data: "+err.Error(), nil).Send(ctx)
 		return
 
-	}
-
-	attachments, err := extractAttachments(ctx)
-
-	if err != nil {
-		response.NewRestResponse(http.StatusInternalServerError, "Failed to fetch attachment: "+err.Error(), nil).Send(ctx)
-		return
-	}
-
-	req.Attachments = attachments
-
-	id, err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		err = apierror.ErrInvalidParamId
-		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
-		return
 	}
 
 	if err := c.useCase.UpdateMaterial(ctx, req, id); err != nil {
@@ -179,6 +156,13 @@ func (c *RestController) delete(ctx *gin.Context) {
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
 		return
 	}
+
+	err = c.verifyMaterialOwnership(ctx, id)
+    if err != nil {
+        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+        return
+    }
+
 	if err := c.useCase.DeleteMaterial(ctx, id); err != nil {
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
 		return
@@ -186,36 +170,87 @@ func (c *RestController) delete(ctx *gin.Context) {
 	response.NewRestResponse(http.StatusOK, "Delete Material successfully", nil).Send(ctx)
 }
 
-func extractAttachments(ctx *gin.Context) ([]AttachmentInput, error) {
-	attachments := []AttachmentInput{}
+func (c *RestController) addAttachment(ctx *gin.Context) {
 
-	form, err := ctx.MultipartForm()
+
+	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving multipart form: %w", err)
+		err = apierror.ErrInvalidParamId
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
+		return
 	}
 
-	fileHeaders := form.File
-	for i := 0; ; i++ {
-		fileKey := fmt.Sprintf("attachments[%d][file]", i)
-		descriptionKey := fmt.Sprintf("attachments[%d][description]", i)
+	err = c.verifyMaterialOwnership(ctx, id)
+    if err != nil {
+        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+        return
+    }
 
-		files, found := fileHeaders[fileKey]
-		if !found {
-			break
-		}
-
-		description := ""
-		if desc, ok := form.Value[descriptionKey]; ok && len(desc) > 0 {
-			description = desc[0]
-		}
-
-		if len(files) > 0 {
-			attachments = append(attachments, AttachmentInput{
-				File:        files[0],
-				Description: description,
-			})
-		}
+	var req AttachmentInput
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.NewRestResponse(http.StatusBadRequest, "Invalid attachment data: "+err.Error(), nil).Send(ctx)
+		return
 	}
 
-	return attachments, nil
+
+	if err := c.useCase.AddAttachment(ctx, id, req); err != nil {
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+		return
+	}
+	response.NewRestResponse(http.StatusOK, "Add attachment successfully", nil).Send(ctx)
 }
+
+func (c *RestController) verifyMaterialOwnership(ctx *gin.Context, materialID uuid.UUID) error {
+    
+    mat, err := c.useCase.GetMaterialByID(ctx, materialID)
+    if err != nil {
+        return  err 
+    }
+
+	courseData, err := c.courseUseCase.GetByID(ctx,mat.CourseID)
+	if err != nil {
+        return  err 
+    }
+	instructorID, exists := ctx.Get("user.id")
+	if !exists {
+		return ErrUnauthorizedAccess
+	}
+    if courseData.InstructorID.String() != instructorID {
+        return  ErrNotOwnerAccess 
+    }
+
+    return nil
+}
+// func extractAttachments(ctx *gin.Context) ([]AttachmentInput, error) {
+// 	attachments := []AttachmentInput{}
+
+// 	form, err := ctx.MultipartForm()
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error retrieving multipart form: %w", err)
+// 	}
+
+// 	fileHeaders := form.File
+// 	for i := 0; ; i++ {
+// 		fileKey := fmt.Sprintf("attachments[%d][file]", i)
+// 		descriptionKey := fmt.Sprintf("attachments[%d][description]", i)
+
+// 		files, found := fileHeaders[fileKey]
+// 		if !found {
+// 			break
+// 		}
+
+// 		description := ""
+// 		if desc, ok := form.Value[descriptionKey]; ok && len(desc) > 0 {
+// 			description = desc[0]
+// 		}
+
+// 		if len(files) > 0 {
+// 			attachments = append(attachments, AttachmentInput{
+// 				File:        files[0],
+// 				Description: description,
+// 			})
+// 		}
+// 	}
+
+// 	return attachments, nil
+// }

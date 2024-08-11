@@ -15,11 +15,11 @@ type CreateMaterialRequest struct {
     CourseID    string          `form:"course_id" binding:"required"`
     Title       string             `form:"title" binding:"required"`
     Description string             `form:"description"`
-    Attachments []AttachmentInput  `form:"attachments"` // Array of AttachmentInput
+    
 }
 
 type UpdateMaterialRequest struct {
     Title       *string             `form:"title"`
     Description *string             `form:"description"`
-    Attachments []AttachmentInput   `form:"attachments"` // Array of AttachmentInput for updates
+    
 }

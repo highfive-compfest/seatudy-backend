@@ -9,6 +9,7 @@ import (
 var (
     ErrMaterialNotFound        = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "MATERIAL_NOT_FOUND"}
     ErrInvalidCourseData     = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_COURSE_DATA"}
+    ErrNotOwnerAccess        = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "NOT_YOUR_COURSE"}
     ErrUnauthorizedAccess    = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "UNAUTHORIZED_ACCESS"}
     ErrForbiddenOperation    = apierror.ApiError{HttpStatus: http.StatusForbidden, Message: "FORBIDDEN_OPERATION"}
     ErrDatabaseOperationFail = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "DATABASE_OPERATION_FAILED"}
