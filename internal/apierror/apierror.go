@@ -23,9 +23,8 @@ func GetHttpStatus(err error) int {
 	return http.StatusInternalServerError
 }
 
-func AddPayload(apiErr ApiError, detail any) ApiError {
+func AddPayload(apiErr *ApiError, detail any) {
 	apiErr.Payload = detail
-	return apiErr
 }
 
 func GetDetail(err error) any {

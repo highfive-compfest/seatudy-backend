@@ -1,0 +1,34 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_VPS_IP }}
+          username: ${{ secrets.PRODUCTION_VPS_USER }}
+          key: ${{ secrets.PRODUCTION_VPS_SSH_KEY }}
+          passphrase: ${{ secrets.PRODUCTION_VPS_SSH_PASSPHRASE }}
+          script: |
+            cd seatudy-backend
+            git pull origin main
+            
+            docker compose build
+            docker compose up -d
+
+      - name: Notify on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2.3.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: "Deployment to production failed!"

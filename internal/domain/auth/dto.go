@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 )
 
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email,max=320"`
-	Name     string `json:"full_name" binding:"required,max=50"`
+	Name     string `json:"name" binding:"required,max=50"`
 	Password string `json:"password" binding:"required,max=72,min=8"`
 	Role     string `json:"role" binding:"required,oneof=student instructor"`
 }
@@ -16,10 +16,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required,max=72"`
 }
 
-type RegisterLoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	user.User    `json:"user"`
+type LoginResponse struct {
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	User         *schema.User `json:"user"`
 }
 
 type RefreshRequest struct {
@@ -36,4 +36,19 @@ type VerifyEmailRequest struct {
 
 type VerifyEmailResponse struct {
 	AccessToken string `json:"access_token"`
+}
+
+type SendResetPasswordLinkRequest struct {
+	Email string `json:"email" binding:"required,email,max=320"`
+}
+
+type ResetPasswordRequest struct {
+	Email       string `json:"email" binding:"required,email,max=320"`
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required,max=72,min=8"`
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required,max=72,min=8"`
+	NewPassword string `json:"new_password" binding:"required,max=72,min=8"`
 }
