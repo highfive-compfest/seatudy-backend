@@ -2,13 +2,14 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"log"
 )
 
 func NewRedis() *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     Env.RedisAddress,
+		Addr:     fmt.Sprintf("%s:%s", Env.RedisHost, Env.RedisPort),
 		Password: Env.RedisPassword,
 		DB:       Env.RedisDatabase,
 	})

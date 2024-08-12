@@ -1,0 +1,63 @@
+services:
+  seatudy-db:
+    image: postgres:16.4
+    container_name: seatudy-db
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}"
+    restart: always
+    shm_size: 128mb
+    volumes:
+      - seatudy-db-data:/var/lib/postgresql/data
+    environment:
+      #this ENV variable is only required for the healthcheck section
+      PGUSER: "postgres"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seatudy-net
+
+  seatudy-redis:
+    image: redis:7.4.0
+    container_name: seatudy-redis
+    env_file:
+      - .env
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
+    ports:
+      - "${REDIS_PORT}"
+    networks:
+      - seatudy-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      seatudy-db:
+        condition: service_healthy
+      seatudy-redis:
+        condition: service_healthy
+    networks:
+      - seatudy-net
+
+networks:
+  seatudy-net:
+    driver: bridge
+
+volumes:
+  seatudy-db-data:
+    driver: local

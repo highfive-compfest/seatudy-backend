@@ -81,7 +81,7 @@ func main() {
 	reviewUseCase := review.NewUseCase(reviewRepo, courseRepo)
 	review.NewRestController(engine, reviewUseCase)
 
-	if err := engine.Run(":" + config.Env.Port); err != nil {
+	if err := engine.Run(":" + config.Env.ApiPort); err != nil {
 		log.Fatalln(err)
 	}
 }

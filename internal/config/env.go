@@ -11,11 +11,16 @@ import (
 type environmentVariables struct {
 	ENV         string
 	FrontendUrl string
-	Port        string
+	ApiPort     string
 
-	DbDsn string
+	PostgresHost     string
+	PostgresPort     string
+	PostgresUser     string
+	PostgresPassword string
+	PostgresDbName   string
 
-	RedisAddress  string
+	RedisHost     string
+	RedisPort     string
 	RedisPassword string
 	RedisDatabase int
 
@@ -50,11 +55,16 @@ func LoadEnv() {
 		log.Fatal("ENV is not set")
 	}
 	env.FrontendUrl = os.Getenv("FRONTEND_URL")
-	env.Port = os.Getenv("PORT")
+	env.ApiPort = os.Getenv("API_PORT")
 
-	env.DbDsn = os.Getenv("DB_DSN")
+	env.PostgresHost = os.Getenv("POSTGRES_HOST")
+	env.PostgresPort = os.Getenv("POSTGRES_PORT")
+	env.PostgresUser = os.Getenv("POSTGRES_USER")
+	env.PostgresPassword = os.Getenv("POSTGRES_PASSWORD")
+	env.PostgresDbName = os.Getenv("POSTGRES_DB")
 
-	env.RedisAddress = os.Getenv("REDIS_ADDRESS")
+	env.RedisHost = os.Getenv("REDIS_HOST")
+	env.RedisPort = os.Getenv("REDIS_PORT")
 	env.RedisPassword = os.Getenv("REDIS_PASSWORD")
 	env.RedisDatabase, err = strconv.Atoi(os.Getenv("REDIS_DATABASE"))
 	if err != nil {
