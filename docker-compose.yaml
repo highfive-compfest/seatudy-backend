@@ -7,7 +7,6 @@ services:
     ports:
       - "${POSTGRES_PORT}"
     restart: always
-    shm_size: 128mb
     volumes:
       - seatudy-db-data:/var/lib/postgresql/data
     environment:
@@ -36,8 +35,8 @@ services:
       - seatudy-net
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 30s
-      timeout: 10s
+      interval: 5s
+      timeout: 5s
       retries: 5
 
   api:
