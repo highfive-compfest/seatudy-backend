@@ -28,6 +28,7 @@ type Course struct {
 	InstructorID uuid.UUID        `json:"instructor_id" gorm:"not null"`
 	Difficulty   CourseDifficulty `json:"difficulty" gorm:"type:course_difficulty;not null"`
 	Materials    []Material       `json:"materials" gorm:"foreignKey:CourseID"`
+	Assignments  []Assignment     `json:"assignments" gorm:"foreignKey:CourseID"`
 	CreatedAt    time.Time        `json:"created_at" gorm:"default:now();not null"`
 	UpdatedAt    time.Time        `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt   `json:"-" gorm:"index"`

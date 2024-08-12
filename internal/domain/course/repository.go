@@ -29,7 +29,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) GetAll(ctx context.Context, page, pageSize int) ([]schema.Course, int, error) {
     var courses []schema.Course
-    result := r.db.Preload("Materials.Attachments").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
+    result := r.db.Preload("Materials.Attachments").Preload("Assignments.Attachments").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
     if result.Error != nil {
         return nil, 0, result.Error
     }
@@ -40,7 +40,7 @@ func (r *repository) GetAll(ctx context.Context, page, pageSize int) ([]schema.C
 
 func (r *repository) FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error) {
     var courses []schema.Course
-    result := r.db.Order("rating DESC").Preload("Materials.Attachments").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
+    result := r.db.Order("rating DESC").Preload("Materials.Attachments").Preload("Assignments.Attachments").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
     if result.Error != nil {
         return nil,0, result.Error
     }
