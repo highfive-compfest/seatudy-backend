@@ -30,7 +30,7 @@ func (muc *MidtransUseCase) CreateTransaction(id string, amount int64) (*snap.Re
 		},
 		Expiry: &snap.ExpiryDetails{
 			Unit:     "minute",
-			Duration: 1,
+			Duration: 15,
 		},
 	}
 
