@@ -3,10 +3,14 @@ package course
 import (
 	"context"
 	"fmt"
-	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"log"
 	"mime/multipart"
 	"slices"
+
+	 "github.com/highfive-compfest/seatudy-backend/internal/domain/courseEnroll"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
+	"github.com/highfive-compfest/seatudy-backend/internal/pagination"
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
@@ -16,14 +20,48 @@ import (
 
 type UseCase struct {
 	courseRepo Repository
+    walletRepo wallet.IRepository
+    courseEnrollUseCase courseenroll.UseCase
 }
 
-func NewUseCase(courseRepo Repository) *UseCase {
-	return &UseCase{courseRepo: courseRepo}
+func NewUseCase(courseRepo Repository, walletRepo wallet.IRepository, ceUseCase courseenroll.UseCase) *UseCase {
+	return &UseCase{courseRepo: courseRepo, walletRepo: walletRepo, courseEnrollUseCase: ceUseCase}
 }
 
-func (uc *UseCase) GetAll(ctx context.Context) ([]schema.Course, error) {
-	return uc.courseRepo.GetAll(ctx)
+func (uc *UseCase) GetAll(ctx context.Context, page, pageSize int) (CoursesPaginatedResponse, error) {
+    courses, total, err := uc.courseRepo.GetAll(ctx, page, pageSize)
+    if err != nil {
+        return CoursesPaginatedResponse{}, err
+    }
+    pag := pagination.NewPagination(total, page, pageSize)
+    return CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pag,
+    }, nil
+}
+
+func (uc *UseCase) GetCourseByPopularity(ctx context.Context, page, pageSize int) (CoursesPaginatedResponse, error) {
+    courses, total, err := uc.courseRepo.FindByPopularity(ctx, page, pageSize)
+    if err != nil {
+        return CoursesPaginatedResponse{}, err
+    }
+    pag := pagination.NewPagination(total, page, pageSize)
+    return CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pag,
+    }, nil
+}
+
+func (uc *UseCase) GetByInstructorID(ctx context.Context, instructorID uuid.UUID, page, pageSize int) (CoursesPaginatedResponse, error) {
+    courses, total, err := uc.courseRepo.FindByInstructorID(ctx, instructorID, page, pageSize)
+    if err != nil {
+        return CoursesPaginatedResponse{}, err
+    }
+    pag := pagination.NewPagination(total, page, pageSize)
+    return CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pag,
+    }, nil
 }
 
 func (uc *UseCase) GetByID(ctx context.Context, id uuid.UUID) (schema.Course, error) {
@@ -120,15 +158,13 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 	return uc.courseRepo.Create(ctx, &course)
 }
 
-func (uc *UseCase) GetByInstructorID(ctx context.Context, instructorID uuid.UUID) ([]schema.Course, error) {
-	return uc.courseRepo.FindByInstructorID(ctx, instructorID)
-}
+
 
 func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.UUID, imageFile, syllabusFile *multipart.FileHeader) (schema.Course, error) {
 	// Fetch the existing course to update
 	course, err := uc.courseRepo.GetByID(ctx, id)
 	if err != nil {
-		return schema.Course{}, fmt.Errorf("could not find course: %v", err)
+		return schema.Course{}, ErrCourseNotFound
 	}
 
 	// Update fields if provided
@@ -211,6 +247,68 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 
 	return course, nil
 }
+
+func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId string) error{
+
+    course , err := uc.GetByID(ctx,courseId)
+    if err !=  nil {
+        return ErrCourseNotFound
+    }
+
+    studentUUID, err := uuid.Parse(studentId)
+    if err != nil {
+        
+        return apierror.ErrInternalServer
+    }
+
+    enrolled, err := uc.courseEnrollUseCase.CheckEnrollment(ctx, studentUUID, courseId)
+    if err != nil {
+        return err
+    }
+    
+    if enrolled {
+        return ErrAlreadyEnrolled // Define this error in your apierror package
+    }
+
+    err = uc.walletRepo.TransferByUserID(nil,studentUUID, course.InstructorID, course.Price)
+
+    if err != nil {
+        return err
+    }
+
+    err = uc.courseEnrollUseCase.EnrollStudent(ctx,studentUUID,course.ID)
+
+    if err != nil {
+        return err
+    }
+    
+    return nil
+}
+
+func (uc *UseCase) GetEnrollmentsByCourse(ctx context.Context, id uuid.UUID)  ([]schema.User, error) {
+	users, err := uc.courseEnrollUseCase.GetEnrollmentsByCourse(ctx,id)
+
+	if err != nil {
+        return nil, err  // Return an error if it occurs
+    }
+	return users, nil
+}
+
+func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string)  ([]schema.Course, error) {
+	studentUUID, err := uuid.Parse(id)
+    if err != nil {
+        
+        return nil,apierror.ErrInternalServer
+    }
+	courses, err := uc.courseEnrollUseCase.GetEnrollmentsByUser(ctx,studentUUID)
+
+	if err != nil {
+        return nil, err  // Return an error if it occurs
+    }
+	return courses, nil
+}
+
+
 
 func (uc *UseCase) Delete(ctx context.Context, id uuid.UUID) error {
 	return uc.courseRepo.Delete(ctx, id)

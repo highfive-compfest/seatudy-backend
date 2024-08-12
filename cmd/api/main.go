@@ -1,13 +1,16 @@
 package main
 
 import (
+	"log"
+	"os"
+
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/assignment"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/attachment"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseEnroll"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/material"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/review"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
-	"log"
-	"os"
 
 	"github.com/highfive-compfest/seatudy-backend/internal/config"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/auth"
@@ -33,6 +36,8 @@ func main() {
 		&schema.Material{},
 		&schema.Attachment{},
 		&schema.Review{},
+		&schema.CourseEnroll{},
+		&schema.Assignment{},
 	)
 	rds := config.NewRedis()
 
@@ -61,15 +66,23 @@ func main() {
 	authUseCase := auth.NewUseCase(authRepo, userRepo, mailDialer)
 	auth.NewRestController(engine, authUseCase)
 
+	courseEnrollRepo := courseenroll.NewRepository(db)
+	courseEnrollUseCase := courseenroll.NewUseCase(courseEnrollRepo)
+
 	// Course
 	courseRepo := course.NewRepository(db)
-	courseUseCase := course.NewUseCase(courseRepo)
-	course.NewRestController(engine, courseUseCase)
+	courseUseCase := course.NewUseCase(courseRepo,walletRepo, *courseEnrollUseCase)
+	course.NewRestController(engine, courseUseCase, walletUseCase)
 
 	// Attachment
 	attachmentRepo := attachment.NewRepository(db)
 	attachmentUseCase := attachment.NewUseCase(attachmentRepo)
 	attachment.NewRestController(engine, attachmentUseCase)
+
+	// Assignment
+	assignmentRepo := assignment.NewRepository(db)
+	assignmentUseCase := assignment.NewUseCase(assignmentRepo,attachmentUseCase)
+	assignment.NewRestController(engine,assignmentUseCase,courseUseCase)
 
 	//Material
 	materialRepo := material.NewRepository(db)

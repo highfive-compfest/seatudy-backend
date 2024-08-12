@@ -22,7 +22,7 @@ func NewUseCase(repo Repository) *UseCase {
 	return &UseCase{repo: repo}
 }
 
-func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string) (schema.Attachment, error) {
+func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string,materialID uuid.UUID) (schema.Attachment, error) {
 	// Validate file type
 	// fileType, err := fileutil.DetectMultipartFileType(fileHeader)
 
@@ -59,6 +59,36 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 		ID:          id,
 		URL:         fileURL,
 		Description: description,
+		MaterialID: &materialID,
+	}
+	if err := auc.repo.Create(ctx, &att); err != nil {
+		return schema.Attachment{}, apierror.ErrInternalServer
+	}
+
+	return att, nil
+}
+
+func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string,assignmentID uuid.UUID) (schema.Attachment, error) {
+
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Println("Error generating UUID: ", err)
+		return schema.Attachment{}, apierror.ErrInternalServer
+	}
+
+	log.Println("masuk ini")
+	// Upload file and get URL
+	fileURL, err := config.UploadFile("attachments/"+id.String()+"."+fileHeader.Filename, fileHeader)
+	if err != nil {
+		return schema.Attachment{}, err
+	}
+
+	// Create attachment record
+	att := schema.Attachment{
+		ID:          id,
+		URL:         fileURL,
+		Description: description,
+		AssignmentID: &assignmentID,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
 		return schema.Attachment{}, apierror.ErrInternalServer

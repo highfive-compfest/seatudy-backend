@@ -1,4 +1,4 @@
-package material
+package assignment
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 )
 
 var (
-    ErrMaterialNotFound        = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "MATERIAL_NOT_FOUND"}
+    ErrAssignmentNotFound        = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "ASSIGNMENT_NOT_FOUND"}
     ErrInvalidCourseData     = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_COURSE_DATA"}
     ErrNotOwnerAccess        = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "NOT_YOUR_COURSE"}
     ErrUnauthorizedAccess    = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "UNAUTHORIZED_ACCESS"}
