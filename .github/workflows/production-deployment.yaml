@@ -9,6 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Delete unnecessary files to free up space
+        run: rm -rf /opt/hostedtoolcache
+
       - name: Checkout the repo
         uses: actions/checkout@v4
 
@@ -22,7 +25,7 @@ jobs:
           script: |
             cd seatudy-backend
             git pull origin main
-            
+
             docker compose build
             docker compose up -d
 
