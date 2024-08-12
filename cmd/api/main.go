@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
 	"log"
 	"os"
 
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/assignment"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/attachment"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseEnroll"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/material"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/review"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
@@ -71,7 +71,7 @@ func main() {
 
 	// Course
 	courseRepo := course.NewRepository(db)
-	courseUseCase := course.NewUseCase(courseRepo,walletRepo, *courseEnrollUseCase)
+	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase)
 	course.NewRestController(engine, courseUseCase, walletUseCase)
 
 	// Attachment
@@ -81,8 +81,8 @@ func main() {
 
 	// Assignment
 	assignmentRepo := assignment.NewRepository(db)
-	assignmentUseCase := assignment.NewUseCase(assignmentRepo,attachmentUseCase)
-	assignment.NewRestController(engine,assignmentUseCase,courseUseCase)
+	assignmentUseCase := assignment.NewUseCase(assignmentRepo, attachmentUseCase)
+	assignment.NewRestController(engine, assignmentUseCase, courseUseCase)
 
 	//Material
 	materialRepo := material.NewRepository(db)
