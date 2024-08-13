@@ -25,8 +25,7 @@ func NewUseCase(repo IRepository) *UseCase {
 func (uc *UseCase) GetMe(ctx context.Context) (*schema.User, error) {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		log.Println("Error parsing uuid from jwt: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrTokenInvalid
 	}
 
 	user, err := uc.repo.GetByID(userID)
@@ -41,9 +40,7 @@ func (uc *UseCase) GetMe(ctx context.Context) (*schema.User, error) {
 func (uc *UseCase) GetByID(req *GetUserByIDRequest) (*GetUserResponse, error) {
 	id, err := uuid.Parse(req.ID)
 	if err != nil {
-		err2 := apierror.ErrValidation
-		apierror.AddPayload(&err2, "INVALID_UUID")
-		return nil, err2
+		return nil, apierror.ErrInvalidParamId
 	}
 
 	user, err := uc.repo.GetByID(id)
@@ -67,7 +64,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
 		log.Println("Error parsing uuid from jwt: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrTokenInvalid
 	}
 
 	var imageUrl string
@@ -84,7 +81,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 		fileType, err := fileutil.DetectMultipartFileType(req.ImageFile)
 		if err != nil {
 			log.Println("Error detecting image type: ", err)
-			return apierror.ErrInternalServer
+			return apierror.ErrInvalidFileType
 		}
 		allowedTypes := fileutil.ImageContentTypes
 		if !slices.Contains(allowedTypes, fileType) {
