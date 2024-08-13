@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
 	"log"
 	"os"
+
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/submission"
 
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/assignment"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/attachment"
@@ -34,10 +36,13 @@ func main() {
 		&schema.User{},
 		&schema.Course{},
 		&schema.Material{},
+		&schema.Assignment{},
+		&schema.Submission{},
 		&schema.Attachment{},
 		&schema.Review{},
 		&schema.CourseEnroll{},
-		&schema.Assignment{},
+		
+
 	)
 	rds := config.NewRedis()
 
@@ -84,6 +89,10 @@ func main() {
 	assignmentUseCase := assignment.NewUseCase(assignmentRepo, attachmentUseCase)
 	assignment.NewRestController(engine, assignmentUseCase, courseUseCase)
 
+	// Submission
+	submissionRepo := submission.NewRepository(db)
+	submissionUseCase := submission.NewUseCase(submissionRepo,assignmentRepo,*attachmentUseCase,courseRepo,courseEnrollRepo)
+	submission.NewRestController(engine,submissionUseCase)
 	//Material
 	materialRepo := material.NewRepository(db)
 	materialUsecase := material.NewUseCase(materialRepo, attachmentUseCase)
