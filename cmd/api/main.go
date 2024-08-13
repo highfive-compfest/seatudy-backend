@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/forum"
 	"log"
 	"os"
 
@@ -41,8 +42,8 @@ func main() {
 		&schema.Attachment{},
 		&schema.Review{},
 		&schema.CourseEnroll{},
-		
-
+		&schema.ForumDiscussion{},
+		&schema.ForumReply{},
 	)
 	rds := config.NewRedis()
 
@@ -91,8 +92,8 @@ func main() {
 
 	// Submission
 	submissionRepo := submission.NewRepository(db)
-	submissionUseCase := submission.NewUseCase(submissionRepo,assignmentRepo,*attachmentUseCase,courseRepo,courseEnrollRepo)
-	submission.NewRestController(engine,submissionUseCase)
+	submissionUseCase := submission.NewUseCase(submissionRepo, assignmentRepo, *attachmentUseCase, courseRepo, courseEnrollRepo)
+	submission.NewRestController(engine, submissionUseCase)
 	//Material
 	materialRepo := material.NewRepository(db)
 	materialUsecase := material.NewUseCase(materialRepo, attachmentUseCase)
@@ -100,8 +101,13 @@ func main() {
 
 	// Review
 	reviewRepo := review.NewRepository(db)
-	reviewUseCase := review.NewUseCase(reviewRepo, courseRepo)
+	reviewUseCase := review.NewUseCase(reviewRepo, courseRepo, courseEnrollUseCase)
 	review.NewRestController(engine, reviewUseCase)
+
+	// Forum
+	forumRepo := forum.NewRepository(db)
+	forumUseCase := forum.NewUseCase(forumRepo, courseEnrollUseCase)
+	forum.NewRestController(engine, forumUseCase)
 
 	if err := engine.Run(":" + config.Env.ApiPort); err != nil {
 		log.Fatalln(err)
