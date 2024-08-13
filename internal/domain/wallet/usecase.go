@@ -80,13 +80,14 @@ func (uc *UseCase) GetBalance(ctx context.Context) (*GetBalanceResponse, error) 
 	// Get user id from context
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, err
+		return nil, apierror.ErrTokenInvalid
 	}
 
 	// Get user wallet by user id
 	wallet, err := uc.repo.GetByUserID(nil, userID)
 	if err != nil {
-		return nil, err
+		log.Println("Error get wallet by user id: ", err)
+		return nil, apierror.ErrInternalServer
 	}
 
 	return &GetBalanceResponse{Balance: wallet.Balance}, nil
@@ -97,7 +98,7 @@ func (uc *UseCase) GetMidtransTransactionsByUser(ctx context.Context,
 	// Get user id from context
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, err
+		return nil, apierror.ErrTokenInvalid
 	}
 
 	isCredit := ctx.Value("user.role").(string) == "student"
@@ -105,7 +106,8 @@ func (uc *UseCase) GetMidtransTransactionsByUser(ctx context.Context,
 	// Get user wallet by user id
 	wallet, err := uc.repo.GetByUserID(nil, userID)
 	if err != nil {
-		return nil, err
+		log.Println("Error get wallet by user id: ", err)
+		return nil, apierror.ErrInternalServer
 	}
 
 	// Get midtrans transactions by wallet id
