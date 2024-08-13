@@ -25,10 +25,10 @@ import (
 type UseCase struct {
 	authRepo   Repository
 	userRepo   user.IRepository
-	mailDialer *gomail.Dialer
+	mailDialer config.IMailer
 }
 
-func NewUseCase(authRepo Repository, userRepo user.IRepository, mailDialer *gomail.Dialer) *UseCase {
+func NewUseCase(authRepo Repository, userRepo user.IRepository, mailDialer config.IMailer) *UseCase {
 	return &UseCase{authRepo: authRepo, userRepo: userRepo, mailDialer: mailDialer}
 }
 

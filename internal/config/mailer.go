@@ -1,8 +1,14 @@
 package config
 
-import "gopkg.in/gomail.v2"
+import (
+	"gopkg.in/gomail.v2"
+)
 
-func NewMailDialer() *gomail.Dialer {
+type IMailer interface {
+	DialAndSend(m ...*gomail.Message) error
+}
+
+func NewMailDialer() IMailer {
 	return gomail.NewDialer(
 		Env.SmtpHost,
 		Env.SmtpPort,
