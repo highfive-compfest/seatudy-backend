@@ -62,7 +62,7 @@ func (c *RestController) create(ctx *gin.Context) {
 
 	course, err := c.courseUseCase.GetByID(ctx, courseId)
 	if err != nil {
-		response.NewRestResponse(http.StatusInternalServerError, "Failed to fetch material: "+err.Error(), nil).Send(ctx)
+		response.NewRestResponse(http.StatusInternalServerError, "Failed to fetch course: "+err.Error(), nil).Send(ctx)
 		return
 	}
 
