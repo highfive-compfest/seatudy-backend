@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
@@ -15,9 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/gomail.v2"
 	"gorm.io/gorm"
-	"html/template"
 	"log"
 	"math/rand"
 	"net/url"
@@ -28,10 +25,10 @@ import (
 type UseCase struct {
 	authRepo   Repository
 	userRepo   user.IRepository
-	mailDialer *gomail.Dialer
+	mailDialer config.IMailer
 }
 
-func NewUseCase(authRepo Repository, userRepo user.IRepository, mailDialer *gomail.Dialer) *UseCase {
+func NewUseCase(authRepo Repository, userRepo user.IRepository, mailDialer config.IMailer) *UseCase {
 	return &UseCase{authRepo: authRepo, userRepo: userRepo, mailDialer: mailDialer}
 }
 
@@ -156,26 +153,6 @@ func generateOTP() int {
 	return rand.Intn(high-low) + low
 }
 
-func generateMail(recipientEmail, subject, templateStr string, data map[string]any) (*gomail.Message, error) {
-	tmpl, err := template.New("email").Parse(templateStr)
-	if err != nil {
-		return nil, err
-	}
-
-	var tmplOutput bytes.Buffer
-	err = tmpl.Execute(&tmplOutput, data)
-	if err != nil {
-		return nil, err
-	}
-
-	mail := mailer.NewMail()
-	mail.SetHeader("To", recipientEmail)
-	mail.SetHeader("Subject", subject)
-	mail.SetBody("text/html", tmplOutput.String())
-
-	return mail, nil
-}
-
 //go:embed otp_email_template.html
 var otpEmailTemplate string
 
@@ -203,7 +180,7 @@ func (uc *UseCase) SendOTP(ctx context.Context) error {
 		"otp":            otp,
 	}
 
-	mail, err := generateMail(email, "Your Seatudy OTP Code", otpEmailTemplate, data)
+	mail, err := mailer.GenerateMail(email, "Your Seatudy OTP Code", otpEmailTemplate, data)
 	if err != nil {
 		log.Println("Error generating OTP email: ", err)
 		return apierror.ErrInternalServer
@@ -283,7 +260,7 @@ func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPass
 			"/reset-password?token=" + token + "&email=" + url.QueryEscape(req.Email),
 	}
 
-	mail, err := generateMail(req.Email, "Reset Your Seatudy Password", resetPasswordEmailTemplate, data)
+	mail, err := mailer.GenerateMail(req.Email, "Reset Your Seatudy Password", resetPasswordEmailTemplate, data)
 	if err != nil {
 		log.Println("Error generating reset password email: ", err)
 		return apierror.ErrInternalServer

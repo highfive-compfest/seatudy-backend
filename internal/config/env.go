@@ -67,19 +67,19 @@ func LoadEnv() {
 	env.RedisPort = os.Getenv("REDIS_PORT")
 	env.RedisPassword = os.Getenv("REDIS_PASSWORD")
 	env.RedisDatabase, err = strconv.Atoi(os.Getenv("REDIS_DATABASE"))
-	if err != nil {
+	if err != nil && env.ENV != "test" {
 		log.Fatal("Fail to parse REDIS_DATABASE")
 	}
 
 	env.JwtAccessSecret = []byte(os.Getenv("JWT_ACCESS_SECRET"))
 	env.JwtAccessDuration, err = time.ParseDuration(os.Getenv("JWT_ACCESS_DURATION"))
-	if err != nil {
+	if err != nil && env.ENV != "test" {
 		log.Fatal("Fail to parse JWT_ACCESS_DURATION")
 	}
 
 	env.JwtRefreshSecret = []byte(os.Getenv("JWT_REFRESH_SECRET"))
 	env.JwtRefreshDuration, err = time.ParseDuration(os.Getenv("JWT_REFRESH_DURATION"))
-	if err != nil {
+	if err != nil && env.ENV != "test" {
 		log.Fatal("Fail to parse JWT_REFRESH_DURATION")
 	}
 
@@ -87,13 +87,13 @@ func LoadEnv() {
 	env.AmsSecretAccessId = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	env.AwsRegion = os.Getenv("AWS_REGION")
 	env.AwsBucketName = os.Getenv("AWS_BUCKET_NAME")
-	if env.AwsBucketName == "" {
+	if env.AwsBucketName == "" && env.ENV != "test" {
 		log.Fatalf("AWS_BUCKET_NAME is not set in the environment variables")
 	}
 
 	env.SmtpHost = os.Getenv("SMTP_HOST")
 	env.SmtpPort, err = strconv.Atoi(os.Getenv("SMTP_PORT"))
-	if err != nil {
+	if err != nil && env.ENV != "test" {
 		log.Fatal("Fail to parse SMTP_PORT")
 	}
 	env.SmtpUsername = os.Getenv("SMTP_USERNAME")
