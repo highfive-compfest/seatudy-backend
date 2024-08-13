@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/course"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
 	"github.com/highfive-compfest/seatudy-backend/internal/pagination"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -16,19 +17,28 @@ import (
 type UseCase struct {
 	repo       IRepository
 	courseRepo course.Repository
+	enrollUc   *courseenroll.UseCase
 }
 
-func NewUseCase(repo IRepository, courseRepo course.Repository) *UseCase {
-	return &UseCase{repo: repo, courseRepo: courseRepo}
+func NewUseCase(repo IRepository, courseRepo course.Repository, enrollUc *courseenroll.UseCase) *UseCase {
+	return &UseCase{repo: repo, courseRepo: courseRepo, enrollUc: enrollUc}
 }
 
 func (uc *UseCase) Create(ctx context.Context, req *CreateReviewRequest) (*CreateReviewResponse, error) {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrTokenInvalid
 	}
 
-	// TODO: check if user had bought the course
+	// Check if user is enrolled in the course
+	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, req.CourseID)
+	if err != nil {
+		log.Println("Error checking enrollment: ", err)
+		return nil, apierror.ErrInternalServer
+	}
+	if !ok {
+		return nil, courseenroll.ErrNotEnrolled
+	}
 
 	reviewID, err := uuid.NewV7()
 	if err != nil {
