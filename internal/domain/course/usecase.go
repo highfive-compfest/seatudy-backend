@@ -9,6 +9,7 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/config"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/notification"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/wallet"
 	"github.com/highfive-compfest/seatudy-backend/internal/fileutil"
 	"github.com/highfive-compfest/seatudy-backend/internal/mailer"
@@ -23,14 +24,15 @@ type UseCase struct {
 	courseRepo          Repository
 	walletRepo          wallet.IRepository
 	courseEnrollUseCase courseenroll.UseCase
+	userRepo            user.IRepository
 	notificationRepo    notification.IRepository
 	mailDialer          config.IMailer
 }
 
 func NewUseCase(courseRepo Repository, walletRepo wallet.IRepository, ceUseCase courseenroll.UseCase,
-	notificationRepo notification.IRepository, mailDialer config.IMailer) *UseCase {
+	userRepo user.IRepository, notificationRepo notification.IRepository, mailDialer config.IMailer) *UseCase {
 	return &UseCase{courseRepo: courseRepo, walletRepo: walletRepo, courseEnrollUseCase: ceUseCase,
-		notificationRepo: notificationRepo, mailDialer: mailDialer}
+		userRepo: userRepo, notificationRepo: notificationRepo, mailDialer: mailDialer}
 }
 
 func (uc *UseCase) GetAll(ctx context.Context, page, pageSize int) (CoursesPaginatedResponse, error) {
@@ -293,13 +295,20 @@ func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId 
 
 	// Send email to instructor
 	go func() {
-		emailData := map[string]any{
-			"course_title":  course.Title,
-			"student_name":  userName,
-			"student_email": userEmail,
+		instructor, err := uc.userRepo.GetByID(course.InstructorID)
+		if err != nil {
+			log.Println("Error getting instructor by ID: ", err)
+			return
 		}
 
-		mail, err := mailer.GenerateMail(userEmail, "You have a new student!", buyCourseInstructorEmailTemplate, emailData)
+		emailData := map[string]any{
+			"instructor_name": instructor.Name,
+			"course_title":    course.Title,
+			"student_name":    userName,
+			"student_email":   userEmail,
+		}
+
+		mail, err := mailer.GenerateMail(instructor.Email, "You have a new student!", buyCourseInstructorEmailTemplate, emailData)
 		if err != nil {
 			log.Println("Error generating email: ", err)
 		}
@@ -317,7 +326,7 @@ func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId 
 		}
 		notif := schema.Notification{
 			ID:     notificationID,
-			UserID: studentUUID,
+			UserID: course.InstructorID,
 			Title:  "You have a new student!",
 			Detail: fmt.Sprintf("%s has been purchased by %s", course.Title, userName),
 		}
