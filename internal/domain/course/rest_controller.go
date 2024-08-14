@@ -40,6 +40,7 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 		courseGroup.GET("/usersEnroll/:courseId",middleware.Authenticate(), controller.GetCourseEnrollments() )
 		courseGroup.GET("/progress/:courseId",middleware.Authenticate(),middleware.RequireEmailVerified(), controller.GetStudentProgress())
 		courseGroup.GET("/search",controller.SearchCourses())
+		courseGroup.GET("/filter", controller.FilterCourse())
 	}
 
 }
@@ -342,16 +343,35 @@ func (c *RestController) GetStudentProgress() gin.HandlerFunc {
 		}
 		courseID, err := uuid.Parse(ctx.Param("courseId"))
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
 			return
 		}
 
 		progress, err := c.uc.GetUserCourseProgress(ctx, courseID,req.UserId)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"progress": progress})
+		response.NewRestResponse(http.StatusOK, "Student progress retrieve successfully", progress).Send(ctx)
+	}
+}
+
+func (c *RestController) FilterCourse() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		var req FilterCoursesRequest
+		if err := ctx.ShouldBindQuery(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid user id: "+err.Error(), nil).Send(ctx)
+			return
+		}
+
+		result, err := c.uc.FilterCourses(ctx, req)
+		if err != nil {
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			return
+		}
+
+		response.NewRestResponse(http.StatusOK, "Course retrieve successfully", result).Send(ctx)
 	}
 }
