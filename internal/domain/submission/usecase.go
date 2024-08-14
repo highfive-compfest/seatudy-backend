@@ -2,6 +2,12 @@ package submission
 
 import (
 	"context"
+	_ "embed"
+	"fmt"
+	"github.com/highfive-compfest/seatudy-backend/internal/config"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/notification"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/mailer"
 	"log"
 
 	"github.com/google/uuid"
@@ -19,12 +25,20 @@ type UseCase struct {
 	courseRepo        course.Repository
 	attachmentUseCase attachment.UseCase
 	courseEnrollRepo  courseenroll.Repository
+	userRepo          user.IRepository
+	notifRepo         notification.IRepository
+	mailDialer        config.IMailer
 }
 
 // NewUseCase creates a new instance of the submission use case.
-func NewUseCase(repo Repository, aRepo assignment.Repository, auc attachment.UseCase,courseRepo course.Repository, ceRepo courseenroll.Repository) *UseCase {
-	return &UseCase{repo: repo, assignmentRepo: aRepo, attachmentUseCase: auc,courseRepo: courseRepo, courseEnrollRepo: ceRepo}
+func NewUseCase(repo Repository, aRepo assignment.Repository, auc attachment.UseCase, courseRepo course.Repository,
+	ceRepo courseenroll.Repository, userRepo user.IRepository, notifRepo notification.IRepository, mailDialer config.IMailer) *UseCase {
+	return &UseCase{repo: repo, assignmentRepo: aRepo, attachmentUseCase: auc, courseRepo: courseRepo,
+		courseEnrollRepo: ceRepo, userRepo: userRepo, notifRepo: notifRepo, mailDialer: mailDialer}
 }
+
+//go:embed new_submission_instructor_email_template.html
+var newSubmissionInstructorEmailTemplate string
 
 // CreateSubmission handles the business logic for creating a new submission.
 func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRequest, userId string) error {
@@ -39,7 +53,7 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 		return apierror.ErrInternalServer
 	}
 
-	err = uc.CheckSubmissionExists(ctx,userUUID,assignmentUUID)
+	err = uc.CheckSubmissionExists(ctx, userUUID, assignmentUUID)
 	if err != nil {
 		return err
 	}
@@ -56,14 +70,14 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 	}
 
 	// check valid assignment ID
-	assignment, err := uc.assignmentRepo.GetByID(ctx, assignmentUUID)
+	assignmentObj, err := uc.assignmentRepo.GetByID(ctx, assignmentUUID)
 	if err != nil {
 		return ErrAssignmentNotFound
 	}
 
 	submission := &schema.Submission{
 		ID:           id,
-		AssignmentID: assignment.ID,
+		AssignmentID: assignmentObj.ID,
 		UserID:       userUUID,
 		Content:      req.Content,
 	}
@@ -71,17 +85,76 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 	log.Println(req.Attachments)
 
 	for _, fileHeader := range req.Attachments {
-		attachment, err := uc.attachmentUseCase.CreateSubmissionAttachment(ctx, fileHeader, "")
+		attachmentObj, err := uc.attachmentUseCase.CreateSubmissionAttachment(ctx, fileHeader, "")
 		if err != nil {
 
 			return ErrS3UploadFail
 		}
-		submission.Attachments = append(submission.Attachments, attachment)
+		submission.Attachments = append(submission.Attachments, attachmentObj)
 	}
 
 	if err := uc.repo.Create(ctx, submission); err != nil {
 		return err
 	}
+
+	go func() {
+		studentName := ctx.Value("user.name").(string)
+		studentEmail := ctx.Value("user.email").(string)
+
+		courseObj, err := uc.courseRepo.GetByID(ctx, assignmentObj.CourseID)
+		if err != nil {
+			log.Println("Error getting course: ", err)
+			return
+		}
+
+		instructor, err := uc.userRepo.GetByID(courseObj.InstructorID)
+		if err != nil {
+			log.Println("Error getting instructor: ", err)
+			return
+		}
+
+		// Send email to instructor
+		go func() {
+			emailData := map[string]any{
+				"instructor_name":  instructor.Name,
+				"course_title":     courseObj.Title,
+				"assignment_title": assignmentObj.Title,
+				"student_name":     studentName,
+				"student_email":    studentEmail,
+			}
+
+			mail, err := mailer.GenerateMail(instructor.Email, "New Assignment Submission", newSubmissionInstructorEmailTemplate, emailData)
+			if err != nil {
+				log.Println("Error generating email: ", err)
+				return
+			}
+
+			if err = uc.mailDialer.DialAndSend(mail); err != nil {
+				log.Println("Error sending email: ", err)
+				return
+			}
+		}()
+
+		// Create in-app notification
+		go func() {
+			notificationID, err := uuid.NewV7()
+			if err != nil {
+				log.Println("Error generating notification ID: ", err)
+				return
+			}
+			notif := schema.Notification{
+				ID:     notificationID,
+				UserID: courseObj.InstructorID,
+				Title:  "New Assignment Submission",
+				Detail: fmt.Sprintf("%s has submitted an assignment for %s", studentName, assignmentObj.Title),
+			}
+
+			if err := uc.notifRepo.Create(&notif); err != nil {
+				log.Println("Error creating notification: ", err)
+				return
+			}
+		}()
+	}()
 
 	return nil
 }
@@ -142,7 +215,7 @@ func (uc *UseCase) UpdateSubmission(ctx context.Context, id uuid.UUID, req *Upda
 			}
 		}
 
-		submission.Attachments = []schema.Attachment{} 
+		submission.Attachments = []schema.Attachment{}
 
 		for _, fileHeader := range req.Attachments {
 			attachment, err := uc.attachmentUseCase.CreateSubmissionAttachment(ctx, fileHeader, "")

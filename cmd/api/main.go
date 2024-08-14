@@ -99,7 +99,8 @@ func main() {
 
 	// Submission
 	submissionRepo := submission.NewRepository(db)
-	submissionUseCase := submission.NewUseCase(submissionRepo, assignmentRepo, *attachmentUseCase, courseRepo, courseEnrollRepo)
+	submissionUseCase := submission.NewUseCase(submissionRepo, assignmentRepo, *attachmentUseCase, courseRepo,
+		courseEnrollRepo, userRepo, notificationRepo, mailDialer)
 	submission.NewRestController(engine, submissionUseCase)
 	//Material
 	materialRepo := material.NewRepository(db)
