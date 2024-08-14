@@ -38,6 +38,7 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 		courseGroup.GET("/popularity", controller.GetByPopularity())
 		courseGroup.GET("/mycourse",middleware.Authenticate(), controller.GetUserEnrollments())
 		courseGroup.GET("/usersEnroll/:courseId",middleware.Authenticate(), controller.GetCourseEnrollments() )
+		courseGroup.GET("/progress/:courseId",middleware.Authenticate(),middleware.RequireEmailVerified(), controller.GetStudentProgress())
 	}
 
 }
@@ -310,4 +311,28 @@ func (c *RestController) checkCourseOwnership(ctx *gin.Context, courseID uuid.UU
         return ErrNotOwnerAccess // Define this error in your apierror package
     }
     return nil
+}
+
+func (c *RestController) GetStudentProgress() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		var req CourseProgress
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid user id: "+err.Error(), nil).Send(ctx)
+			return
+		}
+		courseID, err := uuid.Parse(ctx.Param("courseId"))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+			return
+		}
+
+		progress, err := c.uc.GetUserCourseProgress(ctx, courseID,req.UserId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"progress": progress})
+	}
 }
