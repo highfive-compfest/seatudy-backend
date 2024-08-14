@@ -39,6 +39,7 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 		courseGroup.GET("/mycourse",middleware.Authenticate(), controller.GetUserEnrollments())
 		courseGroup.GET("/usersEnroll/:courseId",middleware.Authenticate(), controller.GetCourseEnrollments() )
 		courseGroup.GET("/progress/:courseId",middleware.Authenticate(),middleware.RequireEmailVerified(), controller.GetStudentProgress())
+		courseGroup.GET("/search",controller.SearchCourses())
 	}
 
 }
@@ -73,6 +74,24 @@ func (c *RestController) GetByPopularity() gin.HandlerFunc {
 		}
 		response.NewRestResponse(http.StatusOK, "Courses retrieved successfully", result).Send(ctx)
 	}
+}
+
+func (c *RestController) SearchCourses() gin.HandlerFunc {
+    return func(ctx *gin.Context) {
+        var req SearchPaginationRequest
+        if err := ctx.ShouldBindQuery(&req); err != nil {
+            response.NewRestResponse(http.StatusBadRequest, "Invalid request parameters: "+err.Error(), nil).Send(ctx)
+            return
+        }
+
+        result, err := c.uc.SearchCoursesByTitle(ctx, req.Title, req.Page, req.Limit)
+        if err != nil {
+            response.NewRestResponse(http.StatusInternalServerError, "Failed to search courses", err.Error()).Send(ctx)
+            return
+        }
+
+        response.NewRestResponse(http.StatusOK, "Courses found", result).Send(ctx)
+    }
 }
 
 
