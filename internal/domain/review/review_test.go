@@ -93,11 +93,11 @@ func (m *MockCourseRepository) FindByPopularity(ctx context.Context, page, pageS
 }
 
 func (m *MockCourseRepository) GetUserCourseProgress(ctx context.Context, courseID, userID uuid.UUID) (float64, error) {
-	args := m.Called(ctx,courseID,userID)
-	return args.Get(0).(float64),args.Error(1)
+	args := m.Called(ctx, courseID, userID)
+	return args.Get(0).(float64), args.Error(1)
 }
 
-func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error){
+func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error) {
 	args := m.Called(ctx, title, page, pageSize)
 	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
 }

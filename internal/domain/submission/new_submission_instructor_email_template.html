@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Assignment Submission Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f9fc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            background-color: #0077b6;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content h2 {
+            color: #0077b6;
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+        .content p {
+            margin: 0 0 10px 0;
+        }
+        .content .assignment-details {
+            margin-top: 20px;
+        }
+        .content .assignment-details h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: #555;
+        }
+        .content .assignment-details p {
+            margin: 0;
+            font-size: 16px;
+            color: #777;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #0077b6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>New Assignment Submission</h1>
+    </div>
+    <div class="content">
+        <h2>Hello, {{.instructor_name}}</h2>
+        <p>We are pleased to inform you that a student has submitted an assignment for your course, <strong>"{{.course_title}}"</strong>, on Seatudy.</p>
+        <div class="assignment-details">
+            <h3>Details:</h3>
+            <p><strong>Assignment Title:</strong> {{.assignment_title}}</p>
+            <p><strong>Student Name:</strong> {{.student_name}}</p>
+            <p><strong>Student Email:</strong> {{.student_email}}</p>
+        </div>
+        <p>You can review the assignment in your instructor dashboard. Thank you for your dedication to teaching on Seatudy!</p>
+    </div>
+    <div class="footer">
+        <p>Need help? <a href="mailto:support@seatudy.nathakusuma.com">Contact Support</a></p>
+        <p>&copy; 2024 Seatudy. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
