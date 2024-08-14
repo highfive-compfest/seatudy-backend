@@ -97,6 +97,11 @@ func (m *MockCourseRepository) GetUserCourseProgress(ctx context.Context, course
 	return args.Get(0).(float64),args.Error(1)
 }
 
+func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error){
+	args := m.Called(ctx, title, page, pageSize)
+	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
+}
+
 type MockEnrollRepository struct {
 	mock.Mock
 }
