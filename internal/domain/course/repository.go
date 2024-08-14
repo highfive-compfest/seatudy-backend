@@ -19,6 +19,7 @@ type Repository interface {
 	FindByInstructorID(ctx context.Context, instructorID uuid.UUID, page, pageSize int) ([]schema.Course, int, error)
 	FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error)
 	GetUserCourseProgress(ctx context.Context, courseID, userID uuid.UUID) (float64, error)
+	SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error)
 }
 
 type repository struct {
@@ -116,5 +117,16 @@ func (r *repository) Update(ctx context.Context, course *schema.Course) error {
 
 func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&schema.Course{}, id).Error
+}
+
+func (r *repository) SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error) {
+    var courses []schema.Course
+    result := r.db.Where("title ILIKE ?", "%"+title+"%").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
+    if result.Error != nil {
+        return nil, 0, result.Error
+    }
+    var totalRecords int64
+    r.db.Model(&schema.Course{}).Where("title ILIKE ?", "%"+title+"%").Count(&totalRecords)
+    return courses, int(totalRecords), nil
 }
 

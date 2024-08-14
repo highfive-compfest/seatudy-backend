@@ -253,6 +253,18 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 	return course, nil
 }
 
+func (uc *UseCase) SearchCoursesByTitle(ctx context.Context, title string, page, pageSize int) (CoursesPaginatedResponse, error) {
+    courses, total, err := uc.courseRepo.SearchByTitle(ctx, title, page, pageSize)
+    if err != nil {
+        return CoursesPaginatedResponse{}, err
+    }
+    pag := pagination.NewPagination(total, page, pageSize)
+    return CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pag,
+    }, nil
+}
+
 //go:embed buy_course_instructor_email_template.html
 var buyCourseInstructorEmailTemplate string
 
