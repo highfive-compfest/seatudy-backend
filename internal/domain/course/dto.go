@@ -43,3 +43,9 @@ type CourseProgressResponse struct {
 	Course   schema.Course `json:"course"`
 	Progress float64       `json:"progress"`
 }
+
+type SearchPaginationRequest struct {
+	Title  string  `form:"title" binding:"required"` // Title must be non-empty
+    Page   int     `form:"page" binding:"required,min=1"`
+	Limit  int     `form:"limit" binding:"required,min=1,max=30"`
+}

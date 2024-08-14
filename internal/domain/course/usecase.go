@@ -246,6 +246,18 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 	return course, nil
 }
 
+func (uc *UseCase) SearchCoursesByTitle(ctx context.Context, title string, page, pageSize int) (CoursesPaginatedResponse, error) {
+    courses, total, err := uc.courseRepo.SearchByTitle(ctx, title, page, pageSize)
+    if err != nil {
+        return CoursesPaginatedResponse{}, err
+    }
+    pag := pagination.NewPagination(total, page, pageSize)
+    return CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pag,
+    }, nil
+}
+
 func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId string) error {
 
 	course, err := uc.GetByID(ctx, courseId)
