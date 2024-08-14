@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Course Purchase Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f9fc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            background-color: #0077b6;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content h2 {
+            color: #0077b6;
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+        .content p {
+            margin: 0 0 10px 0;
+        }
+        .content .course-details {
+            margin-top: 20px;
+        }
+        .content .course-details h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: #555;
+        }
+        .content .course-details p {
+            margin: 0;
+            font-size: 16px;
+            color: #777;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #0077b6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Course Purchased!</h1>
+    </div>
+    <div class="content">
+        <h2>Hello, {{.instructor_name}}</h2>
+        <p>We are excited to inform you that your course, <strong>"{{.course_title}}"</strong>, has been purchased by a student.</p>
+        <div class="course-details">
+            <h3>Student Details:</h3>
+            <p><strong>Student Name:</strong> {{.student_name}}</p>
+            <p><strong>Student Email:</strong> {{.student_email}}</p>
+        </div>
+        <p>Thank you for being an important part of the Seatudy community. We look forward to seeing your continued success!</p>
+    </div>
+    <div class="footer">
+        <p>Need help? <a href="mailto:support@seatudy.nathakusuma.com">Contact Support</a></p>
+        <p>&copy; 2024 Seatudy. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

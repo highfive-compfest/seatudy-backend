@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/forum"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/notification"
 	"log"
 	"os"
 
@@ -32,6 +33,7 @@ func main() {
 	config.LoadEnv()
 
 	db := config.NewPostgresql(
+		&schema.Notification{},
 		&schema.Wallet{},
 		&schema.MidtransTransaction{},
 		&schema.User{},
@@ -55,6 +57,11 @@ func main() {
 
 	config.InitializeS3()
 
+	// Notification
+	notificationRepo := notification.NewRepository(db)
+	notificationUseCase := notification.NewUseCase(notificationRepo)
+	notification.NewRestController(engine, notificationUseCase)
+
 	// Wallet
 	walletRepo := wallet.NewRepository(db)
 	walletUseCase := wallet.NewUseCase(walletRepo, nil)
@@ -77,7 +84,7 @@ func main() {
 
 	// Course
 	courseRepo := course.NewRepository(db)
-	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase)
+	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase, notificationRepo, mailDialer)
 	course.NewRestController(engine, courseUseCase, walletUseCase)
 
 	// Attachment
@@ -92,7 +99,8 @@ func main() {
 
 	// Submission
 	submissionRepo := submission.NewRepository(db)
-	submissionUseCase := submission.NewUseCase(submissionRepo, assignmentRepo, *attachmentUseCase, courseRepo, courseEnrollRepo)
+	submissionUseCase := submission.NewUseCase(submissionRepo, assignmentRepo, *attachmentUseCase, courseRepo,
+		courseEnrollRepo, userRepo, notificationRepo, mailDialer)
 	submission.NewRestController(engine, submissionUseCase)
 	//Material
 	materialRepo := material.NewRepository(db)
