@@ -14,6 +14,7 @@ type CreateCourseRequest struct {
 	Image       *multipart.FileHeader   `form:"image"`
 	Syllabus    *multipart.FileHeader   `form:"syllabus"`
 	Difficulty  schema.CourseDifficulty `form:"difficulty" binding:"required,oneof=beginner intermediate advanced expert"`
+	Category    schema.CourseCategory   `form:"category" binding:"required,oneof='Web Development' 'Game Development' 'Cloud Computing' 'Data Science & Analytics' 'Programming Languages' 'Cybersecurity' 'Mobile App Development' 'Database Management' 'Software Development' 'DevOps & Automation' 'Networking' 'AI & Machine Learning' 'Internet of Things (IoT)' 'Blockchain & Cryptocurrency' 'Augmented Reality (AR) & Virtual Reality (VR)'"`
 }
 
 type UpdateCourseRequest struct {
@@ -23,6 +24,7 @@ type UpdateCourseRequest struct {
 	Image       *multipart.FileHeader    `form:"image,omitempty"`    // Handled separately, not through direct JSON binding
 	Syllabus    *multipart.FileHeader    `form:"syllabus,omitempty"` // Handled separately
 	Difficulty  *schema.CourseDifficulty `form:"difficulty,omitempty" binding:"omitempty,oneof=beginner intermediate advanced expert"`
+	Category    *schema.CourseCategory   `form:"category" binding:"required,oneof='Web Development' 'Game Development' 'Cloud Computing' 'Data Science & Analytics' 'Programming Languages' 'Cybersecurity' 'Mobile App Development' 'Database Management' 'Software Development' 'DevOps & Automation' 'Networking' 'AI & Machine Learning' 'Internet of Things (IoT)' 'Blockchain & Cryptocurrency' 'Augmented Reality (AR) & Virtual Reality (VR)'"`
 }
 
 type CoursesPaginatedResponse struct {
@@ -48,4 +50,13 @@ type SearchPaginationRequest struct {
 	Title  string  `form:"title" binding:"required"` // Title must be non-empty
     Page   int     `form:"page" binding:"required,min=1"`
 	Limit  int     `form:"limit" binding:"required,min=1,max=30"`
+}
+
+type FilterCoursesRequest struct {
+    Rating    *float32              `form:"rating" binding:"omitempty,min=0,max=5"`
+    Category  *string `form:"category" binding:"omitempty,oneof='Web Development' 'Game Development' 'Cloud Computing' 'Data Science & Analytics' 'Programming Languages' 'Cybersecurity' 'Mobile App Development' 'Database Management' 'Software Development' 'DevOps & Automation' 'Networking' 'AI & Machine Learning' 'Internet of Things (IoT)' 'Blockchain & Cryptocurrency' 'Augmented Reality (AR) & Virtual Reality (VR)'"`
+    Difficulty *string `form:"difficulty" binding:"omitempty,oneof=beginner intermediate advanced expert"`
+    Sort      *string               `form:"sort" binding:"omitempty,oneof=highest lowest"` // Sort can be 'highest', 'lowest' or omitted
+    Page      int                  `form:"page" binding:"required,min=1"`
+    Limit     int                  `form:"limit" binding:"required,min=1,max=50"`
 }

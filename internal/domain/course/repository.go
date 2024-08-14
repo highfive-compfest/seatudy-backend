@@ -3,6 +3,7 @@ package course
 import (
 	"context"
 	"log"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
@@ -20,6 +21,7 @@ type Repository interface {
 	FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error)
 	GetUserCourseProgress(ctx context.Context, courseID, userID uuid.UUID) (float64, error)
 	SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error)
+	DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error)
 }
 
 type repository struct {
@@ -130,3 +132,41 @@ func (r *repository) SearchByTitle(ctx context.Context, title string, page, page
     return courses, int(totalRecords), nil
 }
 
+func (r *repository) DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error) {
+    var courses []schema.Course
+    var total int64
+
+    query := r.db.Model(&schema.Course{})
+
+    switch filterType {
+    case "category":
+        query = query.Where("category = ?", filterValue)
+    case "difficulty":
+        query = query.Where("difficulty = ?", filterValue)
+    case "rating":
+		rating, _ := strconv.ParseFloat(filterValue, 32) // Assuming filterValue is a string; handle errors as needed
+        upperBound := rating + 1.0
+        query = query.Where("rating >= ? AND rating < ?", rating, upperBound)
+    }
+
+    if sort == "highest" {
+        query = query.Order("rating DESC")
+    } else if sort == "lowest" {
+        query = query.Order("rating ASC")
+    }
+
+    // Count total results for pagination before limiting and offsetting
+    if err := query.Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+
+    // Apply pagination
+    query = query.Offset((page - 1) * limit).Limit(limit)
+
+    // Execute the final query to retrieve the filtered courses
+    if err := query.Find(&courses).Error; err != nil {
+        return nil, 0, err
+    }
+
+    return courses, int(total) , nil
+}

@@ -168,10 +168,16 @@ func (c *RestController) getAssignmentsByCourse(ctx *gin.Context) {
 		return
 	}
 
+	_ ,  err = c.courseUseCase.GetByID(ctx,courseId)
+	if err != nil {
+        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+        return
+    }
+
 	assignments, err := c.useCase.GetAssignmentsByCourse(ctx, courseId)
 	if err != nil {
-		response.NewRestResponse(http.StatusInternalServerError, "Failed to fetch assignments: "+err.Error(), nil).Send(ctx)
-		return
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+        return
 	}
 	response.NewRestResponse(http.StatusOK, "Assignments retrieved successfully", assignments).Send(ctx)
 }

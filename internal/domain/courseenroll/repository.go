@@ -1,5 +1,4 @@
 package courseenroll
-
 import (
     "context"
     "github.com/google/uuid"
