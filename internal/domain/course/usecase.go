@@ -74,7 +74,6 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 
 	uuidInstructorID, err := uuid.Parse(instructorID)
 	if err != nil {
-		log.Printf("Error parsing instructor ID: %v", err)
 		return ErrUnauthorizedAccess // Or any other appropriate error
 	}
 
@@ -114,7 +113,7 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 
 		imageUrl, err = config.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile)
 		if err != nil {
-			return fmt.Errorf("failed to upload image: %v", err)
+			return ErrS3UploadFail
 		}
 	}
 
