@@ -96,6 +96,34 @@ func migratePostgresqlTables(db *gorm.DB, migrations ...any) error {
 		return err
 	}
 
+	if err := db.Exec(`
+        DO $$ BEGIN
+            CREATE TYPE course_category AS ENUM (
+                'Web Development',
+                'Game Development',
+                'Cloud Computing',
+                'Data Science & Analytics',
+                'Programming Languages',
+                'Cybersecurity',
+                'Mobile App Development',
+                'Database Management',
+                'Software Development',
+                'DevOps & Automation',
+                'Networking',
+                'AI & Machine Learning',
+                'Internet of Things (IoT)',
+                'Blockchain & Cryptocurrency',
+                'Augmented Reality (AR) & Virtual Reality (VR)'
+            );
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    `).Error; err != nil {
+        return err
+    }
+
+	
+
 	if err := db.AutoMigrate(
 		migrations..., // BREAKING: entities should be passed from cmd/api/main.go due to circular dependency issue
 	); err != nil {
