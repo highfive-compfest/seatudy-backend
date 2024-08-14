@@ -153,6 +153,7 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 		InstructorID: uuidInstructorID,
 		Difficulty:   req.Difficulty,
 		ID:           id,
+		Category: req.Category,
 	}
 
 	return uc.courseRepo.Create(ctx, &course)
@@ -177,6 +178,9 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 	}
 	if req.Difficulty != nil {
 		course.Difficulty = *req.Difficulty
+	}
+	if req.Category != nil {
+		course.Category = *req.Category
 	}
 
 	// Handle image update if file is provided
@@ -350,4 +354,37 @@ func (uc *UseCase) GetUserCourseProgress(ctx context.Context, courseId uuid.UUID
 	}
 
 	return uc.courseRepo.GetUserCourseProgress(ctx,course.ID, studentUUID)
+}
+
+func (uc *UseCase) FilterCourses(ctx context.Context, req FilterCoursesRequest) (*CoursesPaginatedResponse, error) {
+    var filterType, filterValue, sort string
+
+    // Determine which filter type and value to use based on non-nil pointers
+    if req.Category != nil {
+        filterType = "category"
+        filterValue = string(*req.Category)
+    } else if req.Difficulty != nil {
+        filterType = "difficulty"
+        filterValue = string(*req.Difficulty)
+    } else if req.Rating != nil {
+        filterType = "rating"
+        filterValue = fmt.Sprintf("%.1f", *req.Rating)
+    } else if req.Sort != nil {
+		sort = string(*req.Sort)
+	}
+
+
+
+    // Query the repository with the constructed filters and sorting
+    courses, total, err := uc.courseRepo.DynamicFilterCourses(ctx, filterType, filterValue, sort, req.Page, req.Limit)
+    if err != nil {
+        return nil, err
+    }
+
+    pagination := pagination.NewPagination(int(total), req.Page, req.Limit)
+
+    return &CoursesPaginatedResponse{
+        Courses:    courses,
+        Pagination: pagination,
+    }, nil
 }
