@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/forum"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/notification"
 	"log"
 	"os"
 
@@ -32,6 +33,7 @@ func main() {
 	config.LoadEnv()
 
 	db := config.NewPostgresql(
+		&schema.Notification{},
 		&schema.Wallet{},
 		&schema.MidtransTransaction{},
 		&schema.User{},
@@ -54,6 +56,11 @@ func main() {
 	engine.Use(middleware.CORS())
 
 	config.InitializeS3()
+
+	// Notification
+	notificationRepo := notification.NewRepository(db)
+	notificationUseCase := notification.NewUseCase(notificationRepo)
+	notification.NewRestController(engine, notificationUseCase)
 
 	// Wallet
 	walletRepo := wallet.NewRepository(db)
