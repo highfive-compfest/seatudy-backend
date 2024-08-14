@@ -102,6 +102,11 @@ func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, 
 	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
 }
 
+func (m *MockCourseRepository) DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error){
+	args := m.Called(ctx, filterType,filterValue,sort, page, limit)
+	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
+}
+
 type MockEnrollRepository struct {
 	mock.Mock
 }
