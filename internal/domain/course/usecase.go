@@ -292,7 +292,7 @@ func (uc *UseCase) GetEnrollmentsByCourse(ctx context.Context, id uuid.UUID) ([]
 	return users, nil
 }
 
-func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string) ([]schema.Course, error) {
+func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string) ([]CourseProgressResponse, error) {
 	studentUUID, err := uuid.Parse(id)
 	if err != nil {
 
@@ -303,9 +303,39 @@ func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string) ([]schem
 	if err != nil {
 		return nil, err // Return an error if it occurs
 	}
-	return courses, nil
+	var courseProgressResponses []CourseProgressResponse
+	for _, course := range courses {
+		progress, err := uc.GetUserCourseProgress(ctx, course.ID, id)
+		if err != nil {
+			// Decide how to handle errors here - skip or return error
+			continue
+		}
+
+		courseProgressResponses = append(courseProgressResponses, CourseProgressResponse{
+			Course:   course,
+			Progress: progress,
+		})
+	}
+
+	return courseProgressResponses, nil
 }
 
 func (uc *UseCase) Delete(ctx context.Context, id uuid.UUID) error {
 	return uc.courseRepo.Delete(ctx, id)
+}
+
+func (uc *UseCase) GetUserCourseProgress(ctx context.Context, courseId uuid.UUID, userId string) (float64, error) {
+
+	course, err := uc.GetByID(ctx, courseId)
+	if err != nil {
+		return 0,ErrCourseNotFound
+	}
+
+	studentUUID, err := uuid.Parse(userId)
+	if err != nil {
+
+		return 0,apierror.ErrInternalServer
+	}
+
+	return uc.courseRepo.GetUserCourseProgress(ctx,course.ID, studentUUID)
 }
