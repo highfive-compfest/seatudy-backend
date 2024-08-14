@@ -84,7 +84,7 @@ func main() {
 
 	// Course
 	courseRepo := course.NewRepository(db)
-	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase)
+	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase, notificationRepo, mailDialer)
 	course.NewRestController(engine, courseUseCase, walletUseCase)
 
 	// Attachment

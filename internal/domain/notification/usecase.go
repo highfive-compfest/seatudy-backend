@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
 	"github.com/highfive-compfest/seatudy-backend/internal/pagination"
-	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"log"
 )
 
@@ -15,15 +14,6 @@ type UseCase struct {
 
 func NewUseCase(repo IRepository) *UseCase {
 	return &UseCase{repo: repo}
-}
-
-func (uc *UseCase) Create(notification *schema.Notification) error {
-	if err := uc.repo.Create(notification); err != nil {
-		log.Println("Error creating notification: ", err)
-		return apierror.ErrInternalServer
-	}
-
-	return nil
 }
 
 func (uc *UseCase) GetMy(ctx context.Context, req *GetByUserIDRequest) (*pagination.GetResourcePaginatedResponse, error) {
