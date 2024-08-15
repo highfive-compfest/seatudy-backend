@@ -20,7 +20,7 @@ type UseCase struct {
 }
 
 func NewUseCase(repo IRepository, enrollUc *courseenroll.UseCase, courseRepo course.Repository) *UseCase {
-	return &UseCase{repo: repo, enrollUc: enrollUc}
+	return &UseCase{repo: repo, enrollUc: enrollUc, courseRepo: courseRepo}
 }
 
 func (uc *UseCase) isPermitted(ctx context.Context, userRole string, userID, courseID uuid.UUID) (bool, error) {
