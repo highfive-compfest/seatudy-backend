@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/course"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
 	"github.com/highfive-compfest/seatudy-backend/internal/pagination"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
@@ -13,12 +14,41 @@ import (
 )
 
 type UseCase struct {
-	repo     IRepository
-	enrollUc *courseenroll.UseCase
+	repo       IRepository
+	enrollUc   *courseenroll.UseCase
+	courseRepo course.Repository
 }
 
-func NewUseCase(repo IRepository, enrollUc *courseenroll.UseCase) *UseCase {
+func NewUseCase(repo IRepository, enrollUc *courseenroll.UseCase, courseRepo course.Repository) *UseCase {
 	return &UseCase{repo: repo, enrollUc: enrollUc}
+}
+
+func (uc *UseCase) isPermitted(ctx context.Context, userRole string, userID, courseID uuid.UUID) (bool, error) {
+	if userRole == "instructor" {
+		courseObj, err := uc.courseRepo.GetByID(ctx, courseID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, course.ErrCourseNotFound
+			}
+			log.Println("Error getting course: ", err)
+			return false, apierror.ErrInternalServer
+		}
+
+		if courseObj.InstructorID != userID {
+			return false, apierror.ErrForbidden
+		}
+	} else {
+		ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, courseID)
+		if err != nil {
+			log.Println("Error checking enrollment: ", err)
+			return false, apierror.ErrInternalServer
+		}
+		if !ok {
+			return false, courseenroll.ErrNotEnrolled
+		}
+	}
+
+	return true, nil
 }
 
 func (uc *UseCase) CreateDiscussion(ctx context.Context, req *CreateForumDiscussionRequest) error {
@@ -27,10 +57,11 @@ func (uc *UseCase) CreateDiscussion(ctx context.Context, req *CreateForumDiscuss
 		return apierror.ErrTokenInvalid
 	}
 
-	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, req.CourseID)
+	userRole := ctx.Value("user.role").(string)
+
+	ok, err := uc.isPermitted(ctx, userRole, userID, req.CourseID)
 	if err != nil {
-		log.Println("Error checking enrollment: ", err)
-		return apierror.ErrInternalServer
+		return err
 	}
 	if !ok {
 		return courseenroll.ErrNotEnrolled
@@ -77,10 +108,9 @@ func (uc *UseCase) GetDiscussionByID(ctx context.Context, idStr string) (*schema
 		return nil, apierror.ErrInternalServer
 	}
 
-	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, discussion.CourseID)
+	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, discussion.CourseID)
 	if err != nil {
-		log.Println("Error checking enrollment: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, err
 	}
 	if !ok {
 		return nil, courseenroll.ErrNotEnrolled
@@ -100,10 +130,9 @@ func (uc *UseCase) GetDiscussionsByCourseID(ctx context.Context, req *GetForumDi
 		return nil, apierror.ErrValidation
 	}
 
-	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, courseID)
+	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, courseID)
 	if err != nil {
-		log.Println("Error checking enrollment: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, err
 	}
 	if !ok {
 		return nil, courseenroll.ErrNotEnrolled
@@ -208,10 +237,9 @@ func (uc *UseCase) CreateReply(ctx context.Context, req *CreateForumReplyRequest
 		return apierror.ErrInternalServer
 	}
 
-	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, discussion.CourseID)
+	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, discussion.CourseID)
 	if err != nil {
-		log.Println("Error checking enrollment: ", err)
-		return apierror.ErrInternalServer
+		return err
 	}
 	if !ok {
 		return courseenroll.ErrNotEnrolled
@@ -258,10 +286,9 @@ func (uc *UseCase) GetReplyByID(ctx context.Context, idStr string) (*schema.Foru
 		return nil, apierror.ErrInternalServer
 	}
 
-	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, reply.CourseID)
+	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, reply.CourseID)
 	if err != nil {
-		log.Println("Error checking enrollment: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, err
 	}
 	if !ok {
 		return nil, courseenroll.ErrNotEnrolled
@@ -290,10 +317,9 @@ func (uc *UseCase) GetRepliesByDiscussionID(ctx context.Context, req *GetForumRe
 		return nil, apierror.ErrInternalServer
 	}
 
-	ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, discussion.CourseID)
+	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, discussion.CourseID)
 	if err != nil {
-		log.Println("Error checking enrollment: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, err
 	}
 	if !ok {
 		return nil, courseenroll.ErrNotEnrolled

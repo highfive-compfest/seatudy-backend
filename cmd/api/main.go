@@ -114,7 +114,7 @@ func main() {
 
 	// Forum
 	forumRepo := forum.NewRepository(db)
-	forumUseCase := forum.NewUseCase(forumRepo, courseEnrollUseCase)
+	forumUseCase := forum.NewUseCase(forumRepo, courseEnrollUseCase, courseRepo)
 	forum.NewRestController(engine, forumUseCase)
 
 	if err := engine.Run(":" + config.Env.ApiPort); err != nil {
