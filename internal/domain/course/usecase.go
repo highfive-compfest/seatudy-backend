@@ -4,6 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"log"
+	"mime/multipart"
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
 	"github.com/highfive-compfest/seatudy-backend/internal/config"
@@ -15,9 +19,6 @@ import (
 	"github.com/highfive-compfest/seatudy-backend/internal/mailer"
 	"github.com/highfive-compfest/seatudy-backend/internal/pagination"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
-	"log"
-	"mime/multipart"
-	"slices"
 )
 
 type UseCase struct {
@@ -27,12 +28,13 @@ type UseCase struct {
 	userRepo            user.IRepository
 	notificationRepo    notification.IRepository
 	mailDialer          config.IMailer
+	uploader            config.FileUploader
 }
 
 func NewUseCase(courseRepo Repository, walletRepo wallet.IRepository, ceUseCase courseenroll.UseCase,
-	userRepo user.IRepository, notificationRepo notification.IRepository, mailDialer config.IMailer) *UseCase {
+	userRepo user.IRepository, notificationRepo notification.IRepository, mailDialer config.IMailer, uploader config.FileUploader) *UseCase {
 	return &UseCase{courseRepo: courseRepo, walletRepo: walletRepo, courseEnrollUseCase: ceUseCase,
-		userRepo: userRepo, notificationRepo: notificationRepo, mailDialer: mailDialer}
+		userRepo: userRepo, notificationRepo: notificationRepo, mailDialer: mailDialer, uploader: uploader,}
 }
 
 func (uc *UseCase) GetAll(ctx context.Context, page, pageSize int) (CoursesPaginatedResponse, error) {
@@ -118,7 +120,7 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 			return err2
 		}
 
-		imageUrl, err = config.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile)
+		imageUrl, err = uc.uploader.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile)
 		if err != nil {
 			return ErrS3UploadFail
 		}
@@ -143,7 +145,7 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 			return err2
 		}
 
-		syllabusUrl, err = config.UploadFile("course/syllabus/"+id.String()+"."+syllabusFile.Filename, syllabusFile)
+		syllabusUrl, err = uc.uploader.UploadFile("course/syllabus/"+id.String()+"."+syllabusFile.Filename, syllabusFile)
 		if err != nil {
 			return fmt.Errorf("failed to upload syllabus: %v", err)
 		}
@@ -159,7 +161,7 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 		InstructorID: uuidInstructorID,
 		Difficulty:   req.Difficulty,
 		ID:           id,
-		Category: req.Category,
+		Category:     req.Category,
 	}
 
 	return uc.courseRepo.Create(ctx, &course)
@@ -216,7 +218,7 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 			})
 			return schema.Course{}, err2
 		}
-		imageUrl, err := config.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile) // Assumes UploadFile encapsulates S3 logic
+		imageUrl, err := uc.uploader.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile) // Assumes UploadFile encapsulates S3 logic
 		if err != nil {
 			return schema.Course{}, fmt.Errorf("failed to upload image: %v", err)
 		}
@@ -240,7 +242,7 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 			})
 			return schema.Course{}, err2
 		}
-		syllabusUrl, err := config.UploadFile("course/syllabus/"+id.String()+"."+syllabusFile.Filename, syllabusFile)
+		syllabusUrl, err := uc.uploader.UploadFile("course/syllabus/"+id.String()+"."+syllabusFile.Filename, syllabusFile)
 		if err != nil {
 			return schema.Course{}, fmt.Errorf("failed to upload syllabus: %v", err)
 		}
@@ -257,15 +259,15 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 }
 
 func (uc *UseCase) SearchCoursesByTitle(ctx context.Context, title string, page, pageSize int) (CoursesPaginatedResponse, error) {
-    courses, total, err := uc.courseRepo.SearchByTitle(ctx, title, page, pageSize)
-    if err != nil {
-        return CoursesPaginatedResponse{}, err
-    }
-    pag := pagination.NewPagination(total, page, pageSize)
-    return CoursesPaginatedResponse{
-        Courses:    courses,
-        Pagination: pag,
-    }, nil
+	courses, total, err := uc.courseRepo.SearchByTitle(ctx, title, page, pageSize)
+	if err != nil {
+		return CoursesPaginatedResponse{}, err
+	}
+	pag := pagination.NewPagination(total, page, pageSize)
+	return CoursesPaginatedResponse{
+		Courses:    courses,
+		Pagination: pag,
+	}, nil
 }
 
 //go:embed buy_course_instructor_email_template.html
@@ -413,34 +415,32 @@ func (uc *UseCase) GetUserCourseProgress(ctx context.Context, courseId uuid.UUID
 }
 
 func (uc *UseCase) FilterCourses(ctx context.Context, req FilterCoursesRequest) (*CoursesPaginatedResponse, error) {
-    var filterType, filterValue, sort string
+	var filterType, filterValue, sort string
 
-    // Determine which filter type and value to use based on non-nil pointers
-    if req.Category != nil {
-        filterType = "category"
-        filterValue = string(*req.Category)
-    } else if req.Difficulty != nil {
-        filterType = "difficulty"
-        filterValue = string(*req.Difficulty)
-    } else if req.Rating != nil {
-        filterType = "rating"
-        filterValue = fmt.Sprintf("%.1f", *req.Rating)
-    } else if req.Sort != nil {
+	// Determine which filter type and value to use based on non-nil pointers
+	if req.Category != nil {
+		filterType = "category"
+		filterValue = string(*req.Category)
+	} else if req.Difficulty != nil {
+		filterType = "difficulty"
+		filterValue = string(*req.Difficulty)
+	} else if req.Rating != nil {
+		filterType = "rating"
+		filterValue = fmt.Sprintf("%.1f", *req.Rating)
+	} else if req.Sort != nil {
 		sort = string(*req.Sort)
 	}
 
+	// Query the repository with the constructed filters and sorting
+	courses, total, err := uc.courseRepo.DynamicFilterCourses(ctx, filterType, filterValue, sort, req.Page, req.Limit)
+	if err != nil {
+		return nil, err
+	}
 
+	pagination := pagination.NewPagination(int(total), req.Page, req.Limit)
 
-    // Query the repository with the constructed filters and sorting
-    courses, total, err := uc.courseRepo.DynamicFilterCourses(ctx, filterType, filterValue, sort, req.Page, req.Limit)
-    if err != nil {
-        return nil, err
-    }
-
-    pagination := pagination.NewPagination(int(total), req.Page, req.Limit)
-
-    return &CoursesPaginatedResponse{
-        Courses:    courses,
-        Pagination: pagination,
-    }, nil
+	return &CoursesPaginatedResponse{
+		Courses:    courses,
+		Pagination: pagination,
+	}, nil
 }
