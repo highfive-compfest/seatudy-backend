@@ -4,8 +4,9 @@ package attachment
 
 import (
 	"context"
-	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 	"log"
+
+	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 
 	"mime/multipart"
 
@@ -15,14 +16,15 @@ import (
 )
 
 type UseCase struct {
-	repo Repository
+	repo     Repository
+	uploader config.FileUploader
 }
 
-func NewUseCase(repo Repository) *UseCase {
-	return &UseCase{repo: repo}
+func NewUseCase(repo Repository, uploader config.FileUploader) *UseCase {
+	return &UseCase{repo: repo, uploader: uploader}
 }
 
-func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string,materialID uuid.UUID) (schema.Attachment, error) {
+func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string, materialID uuid.UUID) (schema.Attachment, error) {
 	// Validate file type
 	// fileType, err := fileutil.DetectMultipartFileType(fileHeader)
 
@@ -49,7 +51,7 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 
 	log.Println("masuk ini")
 	// Upload file and get URL
-	fileURL, err := config.UploadFile("attachments/material/"+id.String()+"."+fileHeader.Filename, fileHeader)
+	fileURL, err := auc.uploader.UploadFile("attachments/material/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
 		return schema.Attachment{}, err
 	}
@@ -59,7 +61,7 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 		ID:          id,
 		URL:         fileURL,
 		Description: description,
-		MaterialID: &materialID,
+		MaterialID:  &materialID,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
 		return schema.Attachment{}, apierror.ErrInternalServer
@@ -68,7 +70,7 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 	return att, nil
 }
 
-func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string,assignmentID uuid.UUID) (schema.Attachment, error) {
+func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string, assignmentID uuid.UUID) (schema.Attachment, error) {
 
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -78,16 +80,16 @@ func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *
 
 	log.Println("masuk ini")
 	// Upload file and get URL
-	fileURL, err := config.UploadFile("attachments/assignment/"+id.String()+"."+fileHeader.Filename, fileHeader)
+	fileURL, err := auc.uploader.UploadFile("attachments/assignment/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
 		return schema.Attachment{}, err
 	}
 
 	// Create attachment record
 	att := schema.Attachment{
-		ID:          id,
-		URL:         fileURL,
-		Description: description,
+		ID:           id,
+		URL:          fileURL,
+		Description:  description,
 		AssignmentID: &assignmentID,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
@@ -107,7 +109,7 @@ func (auc *UseCase) CreateSubmissionAttachment(ctx context.Context, fileHeader *
 
 	log.Println("masuk ini")
 	// Upload file and get URL
-	fileURL, err := config.UploadFile("attachments/submission/"+id.String()+"."+fileHeader.Filename, fileHeader)
+	fileURL, err := auc.uploader.UploadFile("attachments/submission/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
 		return schema.Attachment{}, err
 	}
@@ -136,7 +138,7 @@ func (uc *UseCase) UpdateAttachment(ctx context.Context, id uuid.UUID, req Attac
 	}
 
 	if req.File != nil {
-		fileURL, err := config.UploadFile("attachments/"+id.String()+"."+req.File.Filename, req.File)
+		fileURL, err := uc.uploader.UploadFile("attachments/"+id.String()+"."+req.File.Filename, req.File)
 		if err != nil {
 			return nil, ErrS3UploadFail
 		}
