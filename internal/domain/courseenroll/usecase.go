@@ -20,7 +20,7 @@ func NewUseCase(repo Repository) *UseCase {
 func (uc *UseCase) EnrollStudent(ctx context.Context, userID, courseID uuid.UUID) error {
 	id, err := uuid.NewV7()
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 	enroll := schema.CourseEnroll{
 		ID:        id,

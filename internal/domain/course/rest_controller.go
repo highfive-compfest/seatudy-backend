@@ -13,7 +13,7 @@ import (
 )
 
 type RestController struct {
-	uc *UseCase
+	uc  *UseCase
 	wuc *wallet.UseCase
 }
 
@@ -27,7 +27,7 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 		courseGroup.GET("/:id", controller.GetByID())
 		courseGroup.POST("", middleware.Authenticate(), middleware.RequireRole("instructor"), controller.Create())
 		courseGroup.PUT("/:id", middleware.Authenticate(), middleware.RequireRole("instructor"), controller.Update())
-		courseGroup.POST("/buy/:id", middleware.Authenticate(), middleware.RequireEmailVerified(),middleware.RequireRole("student"), controller.BuyCourse())
+		courseGroup.POST("/buy/:id", middleware.Authenticate(), middleware.RequireEmailVerified(), middleware.RequireRole("student"), controller.BuyCourse())
 		courseGroup.GET("/instructor/:id", middleware.Authenticate(), controller.GetInstructorCourse())
 		courseGroup.DELETE("/:id",
 			middleware.Authenticate(),
@@ -36,10 +36,10 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 		)
 
 		courseGroup.GET("/popularity", controller.GetByPopularity())
-		courseGroup.GET("/mycourse",middleware.Authenticate(), controller.GetUserEnrollments())
-		courseGroup.GET("/usersEnroll/:courseId",middleware.Authenticate(), controller.GetCourseEnrollments() )
-		courseGroup.GET("/progress/:courseId",middleware.Authenticate(),middleware.RequireEmailVerified(), controller.GetStudentProgress())
-		courseGroup.GET("/search",controller.SearchCourses())
+		courseGroup.GET("/mycourse", middleware.Authenticate(), controller.GetUserEnrollments())
+		courseGroup.GET("/usersEnroll/:courseId", middleware.Authenticate(), controller.GetCourseEnrollments())
+		courseGroup.GET("/progress/:courseId", middleware.Authenticate(), middleware.RequireEmailVerified(), controller.GetStudentProgress())
+		courseGroup.GET("/search", controller.SearchCourses())
 		courseGroup.GET("/filter", controller.FilterCourse())
 	}
 
@@ -48,11 +48,11 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 func (c *RestController) GetAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req PaginationRequest
-        if err := ctx.ShouldBindQuery(&req); err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
-            return
-        }
-		result, err := c.uc.GetAll(ctx,req.Page, req.Limit)
+		if err := ctx.ShouldBindQuery(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
+			return
+		}
+		result, err := c.uc.GetAll(ctx, req.Page, req.Limit)
 		if err != nil {
 			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve courses", nil).Send(ctx)
 			return
@@ -64,11 +64,11 @@ func (c *RestController) GetAll() gin.HandlerFunc {
 func (c *RestController) GetByPopularity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req PaginationRequest
-        if err := ctx.ShouldBindQuery(&req); err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
-            return
-        }
-		result, err := c.uc.GetCourseByPopularity(ctx,req.Page, req.Limit)
+		if err := ctx.ShouldBindQuery(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
+			return
+		}
+		result, err := c.uc.GetCourseByPopularity(ctx, req.Page, req.Limit)
 		if err != nil {
 			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve courses", nil).Send(ctx)
 			return
@@ -78,23 +78,22 @@ func (c *RestController) GetByPopularity() gin.HandlerFunc {
 }
 
 func (c *RestController) SearchCourses() gin.HandlerFunc {
-    return func(ctx *gin.Context) {
-        var req SearchPaginationRequest
-        if err := ctx.ShouldBindQuery(&req); err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid request parameters: "+err.Error(), nil).Send(ctx)
-            return
-        }
+	return func(ctx *gin.Context) {
+		var req SearchPaginationRequest
+		if err := ctx.ShouldBindQuery(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid request parameters: "+err.Error(), nil).Send(ctx)
+			return
+		}
 
-        result, err := c.uc.SearchCoursesByTitle(ctx, req.Title, req.Page, req.Limit)
-        if err != nil {
-            response.NewRestResponse(http.StatusInternalServerError, "Failed to search courses", err.Error()).Send(ctx)
-            return
-        }
+		result, err := c.uc.SearchCoursesByTitle(ctx, req.Title, req.Page, req.Limit)
+		if err != nil {
+			response.NewRestResponse(http.StatusInternalServerError, "Failed to search courses", err.Error()).Send(ctx)
+			return
+		}
 
-        response.NewRestResponse(http.StatusOK, "Courses found", result).Send(ctx)
-    }
+		response.NewRestResponse(http.StatusOK, "Courses found", result).Send(ctx)
+	}
 }
-
 
 func (c *RestController) GetInstructorCourse() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -106,15 +105,15 @@ func (c *RestController) GetInstructorCourse() gin.HandlerFunc {
 		}
 
 		var req PaginationRequest
-        if err := ctx.ShouldBindQuery(&req); err != nil {
-            response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
-            return
-        }
+		if err := ctx.ShouldBindQuery(&req); err != nil {
+			response.NewRestResponse(http.StatusBadRequest, "Invalid pagination parameters", nil).Send(ctx)
+			return
+		}
 
 		// Fetch all courses by the instructor ID
-		result, err := c.uc.GetByInstructorID(ctx, instructorID,req.Page, req.Limit)
+		result, err := c.uc.GetByInstructorID(ctx, instructorID, req.Page, req.Limit)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -154,7 +153,7 @@ func (c *RestController) GetCourseEnrollments() gin.HandlerFunc {
 
 func (c *RestController) GetUserEnrollments() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		
+
 		studentID, exists := ctx.Get("user.id")
 		if !exists {
 			response.NewRestResponse(http.StatusInternalServerError, "Failed to get student ID from context", nil).Send(ctx)
@@ -176,7 +175,7 @@ func (c *RestController) GetUserEnrollments() gin.HandlerFunc {
 }
 
 func (c *RestController) BuyCourse() gin.HandlerFunc {
-	return func (ctx *gin.Context)  {
+	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
 			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
@@ -189,9 +188,9 @@ func (c *RestController) BuyCourse() gin.HandlerFunc {
 			return
 		}
 
-		err = c.uc.BuyCourse(ctx,id,studentID.(string))
+		err = c.uc.BuyCourse(ctx, id, studentID.(string))
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -219,7 +218,6 @@ func (c *RestController) GetByID() gin.HandlerFunc {
 func (c *RestController) Create() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-
 		var req CreateCourseRequest
 		if err := ctx.ShouldBind(&req); err != nil {
 			response.NewRestResponse(http.StatusBadRequest, "Invalid course data: "+err.Error(), nil).Send(ctx)
@@ -246,7 +244,7 @@ func (c *RestController) Create() gin.HandlerFunc {
 
 		err := c.uc.Create(ctx, req, imageFile, syllabusFile, instructorID.(string))
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -272,9 +270,9 @@ func (c *RestController) Update() gin.HandlerFunc {
 			return
 		}
 
-		err = c.checkCourseOwnership(ctx,id)
+		err = c.checkCourseOwnership(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 		// Handle optional file uploads
@@ -284,7 +282,7 @@ func (c *RestController) Update() gin.HandlerFunc {
 		// Call the use case to update the course
 		updatedCourse, err := c.uc.Update(ctx.Request.Context(), req, id, imageFile, syllabusFile)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -301,36 +299,35 @@ func (c *RestController) Delete() gin.HandlerFunc {
 			return
 		}
 
-		err = c.checkCourseOwnership(ctx,id)
+		err = c.checkCourseOwnership(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
 		err = c.uc.Delete(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 		response.NewRestResponse(http.StatusOK, "Course deleted successfully", nil).Send(ctx)
 	}
 }
 
-
 func (c *RestController) checkCourseOwnership(ctx *gin.Context, courseID uuid.UUID) error {
 	instructorID, exists := ctx.Get("user.id")
 	if !exists {
-		return ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess.Build()
 	}
-    course, err := c.uc.GetByID(ctx, courseID)
-    if err != nil {
-        return err // This error should be handled by the calling function to send the appropriate response
-    }
-    
-    if course.InstructorID.String() != instructorID {
-        return ErrNotOwnerAccess // Define this error in your apierror package
-    }
-    return nil
+	course, err := c.uc.GetByID(ctx, courseID)
+	if err != nil {
+		return err // This error should be handled by the calling function to send the appropriate response
+	}
+
+	if course.InstructorID.String() != instructorID {
+		return ErrNotOwnerAccess.Build() // Define this error in your apierror package
+	}
+	return nil
 }
 
 func (c *RestController) GetStudentProgress() gin.HandlerFunc {
@@ -347,9 +344,9 @@ func (c *RestController) GetStudentProgress() gin.HandlerFunc {
 			return
 		}
 
-		progress, err := c.uc.GetUserCourseProgress(ctx, courseID,req.UserId)
+		progress, err := c.uc.GetUserCourseProgress(ctx, courseID, req.UserId)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -368,7 +365,7 @@ func (c *RestController) FilterCourse() gin.HandlerFunc {
 
 		result, err := c.uc.FilterCourses(ctx, req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 

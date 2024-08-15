@@ -28,23 +28,23 @@ func (uc *UseCase) isPermitted(ctx context.Context, userRole string, userID, cou
 		courseObj, err := uc.courseRepo.GetByID(ctx, courseID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return false, course.ErrCourseNotFound
+				return false, course.ErrCourseNotFound.Build()
 			}
 			log.Println("Error getting course: ", err)
-			return false, apierror.ErrInternalServer
+			return false, apierror.ErrInternalServer.Build()
 		}
 
 		if courseObj.InstructorID != userID {
-			return false, apierror.ErrForbidden
+			return false, apierror.ErrForbidden.Build()
 		}
 	} else {
 		ok, err := uc.enrollUc.CheckEnrollment(ctx, userID, courseID)
 		if err != nil {
 			log.Println("Error checking enrollment: ", err)
-			return false, apierror.ErrInternalServer
+			return false, apierror.ErrInternalServer.Build()
 		}
 		if !ok {
-			return false, courseenroll.ErrNotEnrolled
+			return false, courseenroll.ErrNotEnrolled.Build()
 		}
 	}
 
@@ -54,7 +54,7 @@ func (uc *UseCase) isPermitted(ctx context.Context, userRole string, userID, cou
 func (uc *UseCase) CreateDiscussion(ctx context.Context, req *CreateForumDiscussionRequest) error {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return apierror.ErrTokenInvalid
+		return apierror.ErrTokenInvalid.Build()
 	}
 
 	userRole := ctx.Value("user.role").(string)
@@ -64,12 +64,12 @@ func (uc *UseCase) CreateDiscussion(ctx context.Context, req *CreateForumDiscuss
 		return err
 	}
 	if !ok {
-		return courseenroll.ErrNotEnrolled
+		return courseenroll.ErrNotEnrolled.Build()
 	}
 
 	discussionID, err := uuid.NewV7()
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	discussion := &schema.ForumDiscussion{
@@ -82,7 +82,7 @@ func (uc *UseCase) CreateDiscussion(ctx context.Context, req *CreateForumDiscuss
 
 	if err := uc.repo.CreateDiscussion(discussion); err != nil {
 		log.Println("Error creating discussion: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -91,21 +91,21 @@ func (uc *UseCase) CreateDiscussion(ctx context.Context, req *CreateForumDiscuss
 func (uc *UseCase) GetDiscussionByID(ctx context.Context, idStr string) (*schema.ForumDiscussion, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return nil, apierror.ErrValidation
+		return nil, apierror.ErrValidation.Build()
 	}
 
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	discussion, err := uc.repo.GetDiscussionByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrDiscussionNotFound
+			return nil, ErrDiscussionNotFound.Build()
 		}
 		log.Println("Error getting discussion: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, discussion.CourseID)
@@ -113,7 +113,7 @@ func (uc *UseCase) GetDiscussionByID(ctx context.Context, idStr string) (*schema
 		return nil, err
 	}
 	if !ok {
-		return nil, courseenroll.ErrNotEnrolled
+		return nil, courseenroll.ErrNotEnrolled.Build()
 	}
 
 	return discussion, nil
@@ -122,12 +122,12 @@ func (uc *UseCase) GetDiscussionByID(ctx context.Context, idStr string) (*schema
 func (uc *UseCase) GetDiscussionsByCourseID(ctx context.Context, req *GetForumDiscussionsRequest) (*pagination.GetResourcePaginatedResponse, error) {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	courseID, err := uuid.Parse(req.CourseID)
 	if err != nil {
-		return nil, apierror.ErrValidation
+		return nil, apierror.ErrValidation.Build()
 	}
 
 	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, courseID)
@@ -135,13 +135,13 @@ func (uc *UseCase) GetDiscussionsByCourseID(ctx context.Context, req *GetForumDi
 		return nil, err
 	}
 	if !ok {
-		return nil, courseenroll.ErrNotEnrolled
+		return nil, courseenroll.ErrNotEnrolled.Build()
 	}
 
 	discussions, total, err := uc.repo.GetDiscussionsByCourseID(courseID, req.Page, req.Limit)
 	if err != nil {
 		log.Println("Error getting discussions: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	resp := pagination.GetResourcePaginatedResponse{
@@ -155,25 +155,25 @@ func (uc *UseCase) GetDiscussionsByCourseID(ctx context.Context, req *GetForumDi
 func (uc *UseCase) UpdateDiscussion(ctx context.Context, req *UpdateForumDiscussionRequest) error {
 	id, err := uuid.Parse(req.ID)
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	discussion, err := uc.repo.GetDiscussionByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrDiscussionNotFound
+			return ErrDiscussionNotFound.Build()
 		}
 		log.Println("Error getting discussion: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if discussion.UserID != userID {
-		return apierror.ErrNotYourResource
+		return apierror.ErrNotYourResource.Build()
 	}
 
 	newDiscussion := &schema.ForumDiscussion{
@@ -184,7 +184,7 @@ func (uc *UseCase) UpdateDiscussion(ctx context.Context, req *UpdateForumDiscuss
 
 	if err := uc.repo.UpdateDiscussion(newDiscussion); err != nil {
 		log.Println("Error updating discussion: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -193,30 +193,30 @@ func (uc *UseCase) UpdateDiscussion(ctx context.Context, req *UpdateForumDiscuss
 func (uc *UseCase) DeleteDiscussion(ctx context.Context, idStr string) error {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	discussion, err := uc.repo.GetDiscussionByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrDiscussionNotFound
+			return ErrDiscussionNotFound.Build()
 		}
 		log.Println("Error getting discussion: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if discussion.UserID != userID {
-		return apierror.ErrNotYourResource
+		return apierror.ErrNotYourResource.Build()
 	}
 
 	if err := uc.repo.DeleteDiscussion(id); err != nil {
 		log.Println("Error deleting discussion: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -225,16 +225,16 @@ func (uc *UseCase) DeleteDiscussion(ctx context.Context, idStr string) error {
 func (uc *UseCase) CreateReply(ctx context.Context, req *CreateForumReplyRequest) error {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return apierror.ErrTokenInvalid
+		return apierror.ErrTokenInvalid.Build()
 	}
 
 	discussion, err := uc.repo.GetDiscussionByID(req.DiscussionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrDiscussionNotFound
+			return ErrDiscussionNotFound.Build()
 		}
 		log.Println("Error getting discussion: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, discussion.CourseID)
@@ -242,12 +242,12 @@ func (uc *UseCase) CreateReply(ctx context.Context, req *CreateForumReplyRequest
 		return err
 	}
 	if !ok {
-		return courseenroll.ErrNotEnrolled
+		return courseenroll.ErrNotEnrolled.Build()
 	}
 
 	replyID, err := uuid.NewV7()
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	reply := &schema.ForumReply{
@@ -260,7 +260,7 @@ func (uc *UseCase) CreateReply(ctx context.Context, req *CreateForumReplyRequest
 
 	if err := uc.repo.CreateReply(reply); err != nil {
 		log.Println("Error creating reply: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -269,21 +269,21 @@ func (uc *UseCase) CreateReply(ctx context.Context, req *CreateForumReplyRequest
 func (uc *UseCase) GetReplyByID(ctx context.Context, idStr string) (*schema.ForumReply, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return nil, apierror.ErrValidation
+		return nil, apierror.ErrValidation.Build()
 	}
 
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	reply, err := uc.repo.GetReplyByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrReplyNotFound
+			return nil, ErrReplyNotFound.Build()
 		}
 		log.Println("Error getting reply: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, reply.CourseID)
@@ -291,7 +291,7 @@ func (uc *UseCase) GetReplyByID(ctx context.Context, idStr string) (*schema.Foru
 		return nil, err
 	}
 	if !ok {
-		return nil, courseenroll.ErrNotEnrolled
+		return nil, courseenroll.ErrNotEnrolled.Build()
 	}
 
 	return reply, nil
@@ -300,21 +300,21 @@ func (uc *UseCase) GetReplyByID(ctx context.Context, idStr string) (*schema.Foru
 func (uc *UseCase) GetRepliesByDiscussionID(ctx context.Context, req *GetForumRepliesRequest) (*pagination.GetResourcePaginatedResponse, error) {
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	discussionID, err := uuid.Parse(req.DiscussionID)
 	if err != nil {
-		return nil, apierror.ErrValidation
+		return nil, apierror.ErrValidation.Build()
 	}
 
 	discussion, err := uc.repo.GetDiscussionByID(discussionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrDiscussionNotFound
+			return nil, ErrDiscussionNotFound.Build()
 		}
 		log.Println("Error getting discussion: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	ok, err := uc.isPermitted(ctx, ctx.Value("user.role").(string), userID, discussion.CourseID)
@@ -322,13 +322,13 @@ func (uc *UseCase) GetRepliesByDiscussionID(ctx context.Context, req *GetForumRe
 		return nil, err
 	}
 	if !ok {
-		return nil, courseenroll.ErrNotEnrolled
+		return nil, courseenroll.ErrNotEnrolled.Build()
 	}
 
 	replies, total, err := uc.repo.GetRepliesByDiscussionID(discussionID, req.Page, req.Limit)
 	if err != nil {
 		log.Println("Error getting replies: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	resp := pagination.GetResourcePaginatedResponse{
@@ -342,25 +342,25 @@ func (uc *UseCase) GetRepliesByDiscussionID(ctx context.Context, req *GetForumRe
 func (uc *UseCase) UpdateReply(ctx context.Context, req *UpdateForumReplyRequest) error {
 	id, err := uuid.Parse(req.ID)
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	reply, err := uc.repo.GetReplyByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrReplyNotFound
+			return ErrReplyNotFound.Build()
 		}
 		log.Println("Error getting reply: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if reply.UserID != userID {
-		return apierror.ErrNotYourResource
+		return apierror.ErrNotYourResource.Build()
 	}
 
 	newReply := &schema.ForumReply{
@@ -370,7 +370,7 @@ func (uc *UseCase) UpdateReply(ctx context.Context, req *UpdateForumReplyRequest
 
 	if err := uc.repo.UpdateReply(newReply); err != nil {
 		log.Println("Error updating reply: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -379,30 +379,30 @@ func (uc *UseCase) UpdateReply(ctx context.Context, req *UpdateForumReplyRequest
 func (uc *UseCase) DeleteReply(ctx context.Context, idStr string) error {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	userID, err := uuid.Parse(ctx.Value("user.id").(string))
 	if err != nil {
-		return apierror.ErrTokenInvalid
+		return apierror.ErrTokenInvalid.Build()
 	}
 
 	reply, err := uc.repo.GetReplyByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrReplyNotFound
+			return ErrReplyNotFound.Build()
 		}
 		log.Println("Error getting reply: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if reply.UserID != userID {
-		return apierror.ErrNotYourResource
+		return apierror.ErrNotYourResource.Build()
 	}
 
 	if err := uc.repo.DeleteReply(id); err != nil {
 		log.Println("Error deleting reply: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil

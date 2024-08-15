@@ -7,12 +7,35 @@ import (
 )
 
 var (
-    ErrCourseNotFound        = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "COURSE_NOT_FOUND"}
-    ErrInvalidCourseData     = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_COURSE_DATA"}
-    ErrUnauthorizedAccess    = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "UNAUTHORIZED_ACCESS"}
-    ErrForbiddenOperation    = apierror.ApiError{HttpStatus: http.StatusForbidden, Message: "FORBIDDEN_OPERATION"}
-    ErrDatabaseOperationFail = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "DATABASE_OPERATION_FAILED"}
-    ErrS3UploadFail          = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "S3_UPLOAD_FAILED"}
-    ErrUUIDGenerationFail    = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "UUID_GENERATION_FAILED"}
-    ErrEditConflict          = apierror.ApiError{HttpStatus: http.StatusConflict, Message: "EDIT_CONFLICT"}
+	ErrCourseNotFound = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusNotFound).
+				WithMessage("COURSE_NOT_FOUND")
+
+	ErrInvalidCourseData = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusBadRequest).
+				WithMessage("INVALID_COURSE_DATA")
+
+	ErrUnauthorizedAccess = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusUnauthorized).
+				WithMessage("UNAUTHORIZED_ACCESS")
+
+	ErrForbiddenOperation = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusForbidden).
+				WithMessage("FORBIDDEN_OPERATION")
+
+	ErrDatabaseOperationFail = apierror.NewApiErrorBuilder().
+					WithHttpStatus(http.StatusInternalServerError).
+					WithMessage("DATABASE_OPERATION_FAILED")
+
+	ErrS3UploadFail = apierror.NewApiErrorBuilder().
+			WithHttpStatus(http.StatusInternalServerError).
+			WithMessage("S3_UPLOAD_FAILED")
+
+	ErrUUIDGenerationFail = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusInternalServerError).
+				WithMessage("UUID_GENERATION_FAILED")
+
+	ErrEditConflict = apierror.NewApiErrorBuilder().
+			WithHttpStatus(http.StatusConflict).
+			WithMessage("EDIT_CONFLICT")
 )

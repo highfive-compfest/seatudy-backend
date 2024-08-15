@@ -142,7 +142,7 @@ func (suite *AuthUseCaseTestSuite) TestRegister_EmailAlreadyRegistered() {
 
 	err := suite.useCase.Register(req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrEmailAlreadyRegistered, err)
+	assert.Equal(suite.T(), ErrEmailAlreadyRegistered.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestRegister_InternalServerError() {
@@ -157,7 +157,7 @@ func (suite *AuthUseCaseTestSuite) TestRegister_InternalServerError() {
 
 	err := suite.useCase.Register(req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestLogin_Success() {
@@ -197,7 +197,7 @@ func (suite *AuthUseCaseTestSuite) TestLogin_UserNotFound() {
 	resp, err := suite.useCase.Login(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), resp)
-	assert.Equal(suite.T(), ErrInvalidCredentials, err)
+	assert.Equal(suite.T(), ErrInvalidCredentials.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestLogin_InvalidCredentials() {
@@ -217,7 +217,7 @@ func (suite *AuthUseCaseTestSuite) TestLogin_InvalidCredentials() {
 	resp, err := suite.useCase.Login(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), resp)
-	assert.Equal(suite.T(), ErrInvalidCredentials, err)
+	assert.Equal(suite.T(), ErrInvalidCredentials.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestLogin_InternalServerError() {
@@ -231,7 +231,7 @@ func (suite *AuthUseCaseTestSuite) TestLogin_InternalServerError() {
 	resp, err := suite.useCase.Login(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), resp)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestRefresh_Success() {
@@ -259,7 +259,7 @@ func (suite *AuthUseCaseTestSuite) TestRefresh_InvalidToken() {
 	resp, err := suite.useCase.Refresh(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), resp)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestRefresh_TokenExpired() {
@@ -275,7 +275,7 @@ func (suite *AuthUseCaseTestSuite) TestRefresh_TokenExpired() {
 	resp, err := suite.useCase.Refresh(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), resp)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestSendOTP_Success() {
@@ -305,7 +305,7 @@ func (suite *AuthUseCaseTestSuite) TestSendOTP_EmailAlreadyVerified() {
 
 	err := suite.useCase.SendOTP(ctx)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrEmailAlreadyVerified, err)
+	assert.Equal(suite.T(), ErrEmailAlreadyVerified.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestVerifyOTP_Success() {
@@ -334,7 +334,7 @@ func (suite *AuthUseCaseTestSuite) TestVerifyOTP_ExpiredOTP() {
 
 	err := suite.useCase.VerifyOTP(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrExpiredOTP, err)
+	assert.Equal(suite.T(), ErrExpiredOTP.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestVerifyOTP_InvalidOTP() {
@@ -348,7 +348,7 @@ func (suite *AuthUseCaseTestSuite) TestVerifyOTP_InvalidOTP() {
 
 	err := suite.useCase.VerifyOTP(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrInvalidOTP, err)
+	assert.Equal(suite.T(), ErrInvalidOTP.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestVerifyOTP_InternalServerError() {
@@ -362,7 +362,7 @@ func (suite *AuthUseCaseTestSuite) TestVerifyOTP_InternalServerError() {
 
 	err := suite.useCase.VerifyOTP(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestSendResetPasswordLink_Success() {
@@ -396,7 +396,7 @@ func (suite *AuthUseCaseTestSuite) TestSendResetPasswordLink_UserNotFound() {
 
 	err := suite.useCase.SendResetPasswordLink(context.Background(), req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), user.ErrUserNotFound, err)
+	assert.Equal(suite.T(), user.ErrUserNotFound.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestSendResetPasswordLink_InternalServerError() {
@@ -408,7 +408,7 @@ func (suite *AuthUseCaseTestSuite) TestSendResetPasswordLink_InternalServerError
 
 	err := suite.useCase.SendResetPasswordLink(context.Background(), req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestResetPassword_Success() {
@@ -437,7 +437,7 @@ func (suite *AuthUseCaseTestSuite) TestResetPassword_ExpiredToken() {
 
 	err := suite.useCase.ResetPassword(context.Background(), req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrExpiredResetPasswordLink, err)
+	assert.Equal(suite.T(), ErrExpiredResetPasswordLink.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestResetPassword_InvalidToken() {
@@ -451,7 +451,7 @@ func (suite *AuthUseCaseTestSuite) TestResetPassword_InvalidToken() {
 
 	err := suite.useCase.ResetPassword(context.Background(), req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrInvalidResetPasswordLink, err)
+	assert.Equal(suite.T(), ErrInvalidResetPasswordLink.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestResetPassword_InternalServerError() {
@@ -463,7 +463,7 @@ func (suite *AuthUseCaseTestSuite) TestResetPassword_InternalServerError() {
 
 	err := suite.useCase.ResetPassword(context.Background(), req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestChangePassword_Success() {
@@ -503,7 +503,7 @@ func (suite *AuthUseCaseTestSuite) TestChangePassword_InvalidCredentials() {
 
 	err := suite.useCase.ChangePassword(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrInvalidCredentials, err)
+	assert.Equal(suite.T(), ErrInvalidCredentials.Build(), err)
 }
 
 func (suite *AuthUseCaseTestSuite) TestChangePassword_InternalServerError() {
@@ -518,7 +518,7 @@ func (suite *AuthUseCaseTestSuite) TestChangePassword_InternalServerError() {
 
 	err := suite.useCase.ChangePassword(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func TestAuthUseCaseTestSuite(t *testing.T) {

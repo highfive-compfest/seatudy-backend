@@ -41,7 +41,7 @@ func (muc *MidtransUseCase) VerifyPayment(notificationPayload map[string]any) er
 	// 3. Get order-id from payload
 	orderId, exists := notificationPayload["order_id"].(string)
 	if !exists {
-		return apierror.ErrValidation
+		return apierror.ErrValidation.Build()
 	}
 
 	// 4. Check transaction to Midtrans with param orderId
@@ -53,26 +53,26 @@ func (muc *MidtransUseCase) VerifyPayment(notificationPayload map[string]any) er
 	if transactionStatusResp != nil {
 		transactionId, err := uuid.Parse(orderId)
 		if err != nil {
-			return apierror.ErrValidation
+			return apierror.ErrValidation.Build()
 		}
 		// 5. Do set transaction status based on response from check transaction status
 		if transactionStatusResp.TransactionStatus == "capture" {
 			if transactionStatusResp.FraudStatus == "challenge" {
 				// set transaction status on your database to 'challenge'
 				if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusChallenge); err != nil {
-					return apierror.ErrInternalServer
+					return apierror.ErrInternalServer.Build()
 				}
 				// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
 			} else if transactionStatusResp.FraudStatus == "accept" {
 				// set transaction status on your database to 'success'
 				if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusSuccess); err != nil {
-					return apierror.ErrInternalServer
+					return apierror.ErrInternalServer.Build()
 				}
 			}
 		} else if transactionStatusResp.TransactionStatus == "settlement" {
 			// set transaction status on your databaase to 'success'
 			if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusSuccess); err != nil {
-				return apierror.ErrInternalServer
+				return apierror.ErrInternalServer.Build()
 			}
 		} else if transactionStatusResp.TransactionStatus == "deny" {
 			// you can ignore 'deny', because most of the time it allows payment retries
@@ -80,12 +80,12 @@ func (muc *MidtransUseCase) VerifyPayment(notificationPayload map[string]any) er
 		} else if transactionStatusResp.TransactionStatus == "cancel" || transactionStatusResp.TransactionStatus == "expire" {
 			// set transaction status on your databaase to 'failure'
 			if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusFailure); err != nil {
-				return apierror.ErrInternalServer
+				return apierror.ErrInternalServer.Build()
 			}
 		} else if transactionStatusResp.TransactionStatus == "pending" {
 			// set transaction status on your databaase to 'pending' / waiting payment
 			if err := muc.walletUc.VerifyPayment(transactionId, schema.MidtransStatusPending); err != nil {
-				return apierror.ErrInternalServer
+				return apierror.ErrInternalServer.Build()
 			}
 		}
 	}

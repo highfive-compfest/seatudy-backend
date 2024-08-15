@@ -45,12 +45,12 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	assignmentUUID, err := uuid.Parse(req.AssignmentID)
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	err = uc.CheckSubmissionExists(ctx, userUUID, assignmentUUID)
@@ -66,7 +66,7 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 	id, err := uuid.NewV7()
 	if err != nil {
 
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	// check valid assignment ID
@@ -262,7 +262,7 @@ func (uc *UseCase) VerifyCourseEnroll(ctx context.Context, userID uuid.UUID, ass
 
 	enroll, err := uc.courseEnrollRepo.IsEnrolled(ctx, userID, ass.CourseID)
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if !enroll {

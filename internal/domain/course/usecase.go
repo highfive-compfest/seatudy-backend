@@ -34,7 +34,7 @@ type UseCase struct {
 func NewUseCase(courseRepo Repository, walletRepo wallet.IRepository, ceUseCase courseenroll.UseCase,
 	userRepo user.IRepository, notificationRepo notification.IRepository, mailDialer config.IMailer, uploader config.FileUploader) *UseCase {
 	return &UseCase{courseRepo: courseRepo, walletRepo: walletRepo, courseEnrollUseCase: ceUseCase,
-		userRepo: userRepo, notificationRepo: notificationRepo, mailDialer: mailDialer, uploader: uploader,}
+		userRepo: userRepo, notificationRepo: notificationRepo, mailDialer: mailDialer, uploader: uploader}
 }
 
 func (uc *UseCase) GetAll(ctx context.Context, page, pageSize int) (CoursesPaginatedResponse, error) {
@@ -83,46 +83,44 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 
 	uuidInstructorID, err := uuid.Parse(instructorID)
 	if err != nil {
-		return ErrUnauthorizedAccess // Or any other appropriate error
+		return ErrUnauthorizedAccess.Build() // Or any other appropriate error
 	}
 
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Println("Error generating UUID: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	// Upload image if present
 	if imageFile != nil {
 
 		if imageFile.Size > 2*fileutil.MegaByte {
-			err2 := apierror.ErrFileTooLarge
-			apierror.AddPayload(&err2, map[string]string{
+			err2 := apierror.ErrFileTooLarge.WithPayload(map[string]string{
 				"max_size":      "2 MB",
 				"received_size": fileutil.ByteToAppropriateUnit(imageFile.Size),
 			})
-			return err2
+			return err2.Build()
 		}
 		fileType, err := fileutil.DetectMultipartFileType(imageFile)
 
 		if err != nil {
 			log.Println("Error detecting image type: ", err)
-			return apierror.ErrInternalServer
+			return apierror.ErrInternalServer.Build()
 		}
 
 		allowedTypes := fileutil.ImageContentTypes
 		if !slices.Contains(allowedTypes, fileType) {
-			err2 := apierror.ErrInvalidFileType
-			apierror.AddPayload(&err2, map[string]any{
+			err2 := apierror.ErrInvalidFileType.WithPayload(map[string]any{
 				"allowed_types": allowedTypes,
 				"received_type": fileType,
 			})
-			return err2
+			return err2.Build()
 		}
 
 		imageUrl, err = uc.uploader.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile)
 		if err != nil {
-			return ErrS3UploadFail
+			return ErrS3UploadFail.Build()
 		}
 	}
 
@@ -133,16 +131,15 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 
 		if err != nil {
 			log.Println("Error detecting syllabus type: ", err)
-			return apierror.ErrInternalServer
+			return apierror.ErrInternalServer.Build()
 		}
 		allowedTypes := fileutil.SyllabusContentTypes
 		if !slices.Contains(allowedTypes, fileType) {
-			err2 := apierror.ErrInvalidFileType
-			apierror.AddPayload(&err2, map[string]any{
+			err2 := apierror.ErrInvalidFileType.WithPayload(map[string]any{
 				"allowed_types": allowedTypes,
 				"received_type": fileType,
 			})
-			return err2
+			return err2.Build()
 		}
 
 		syllabusUrl, err = uc.uploader.UploadFile("course/syllabus/"+id.String()+"."+syllabusFile.Filename, syllabusFile)
@@ -171,7 +168,7 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 	// Fetch the existing course to update
 	course, err := uc.courseRepo.GetByID(ctx, id)
 	if err != nil {
-		return schema.Course{}, ErrCourseNotFound
+		return schema.Course{}, ErrCourseNotFound.Build()
 	}
 
 	// Update fields if provided
@@ -195,28 +192,26 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 	if imageFile != nil {
 
 		if imageFile.Size > 2*fileutil.MegaByte {
-			err2 := apierror.ErrFileTooLarge
-			apierror.AddPayload(&err2, map[string]string{
+			err2 := apierror.ErrFileTooLarge.WithPayload(map[string]string{
 				"max_size":      "2 MB",
 				"received_size": fileutil.ByteToAppropriateUnit(imageFile.Size),
 			})
-			return schema.Course{}, err2
+			return schema.Course{}, err2.Build()
 		}
 		fileType, err := fileutil.DetectMultipartFileType(imageFile)
 
 		if err != nil {
 			log.Println("Error detecting image type: ", err)
-			return schema.Course{}, apierror.ErrInternalServer
+			return schema.Course{}, apierror.ErrInternalServer.Build()
 		}
 
 		allowedTypes := fileutil.ImageContentTypes
 		if !slices.Contains(allowedTypes, fileType) {
-			err2 := apierror.ErrInvalidFileType
-			apierror.AddPayload(&err2, map[string]any{
+			err2 := apierror.ErrInvalidFileType.WithPayload(map[string]any{
 				"allowed_types": allowedTypes,
 				"received_type": fileType,
 			})
-			return schema.Course{}, err2
+			return schema.Course{}, err2.Build()
 		}
 		imageUrl, err := uc.uploader.UploadFile("course/image/"+id.String()+"."+imageFile.Filename, imageFile) // Assumes UploadFile encapsulates S3 logic
 		if err != nil {
@@ -231,16 +226,15 @@ func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.
 
 		if err != nil {
 			log.Println("Error detecting syllabus type: ", err)
-			return schema.Course{}, apierror.ErrInternalServer
+			return schema.Course{}, apierror.ErrInternalServer.Build()
 		}
 		allowedTypes := fileutil.SyllabusContentTypes
 		if !slices.Contains(allowedTypes, fileType) {
-			err2 := apierror.ErrInvalidFileType
-			apierror.AddPayload(&err2, map[string]any{
+			err2 := apierror.ErrInvalidFileType.WithPayload(map[string]any{
 				"allowed_types": allowedTypes,
 				"received_type": fileType,
 			})
-			return schema.Course{}, err2
+			return schema.Course{}, err2.Build()
 		}
 		syllabusUrl, err := uc.uploader.UploadFile("course/syllabus/"+id.String()+"."+syllabusFile.Filename, syllabusFile)
 		if err != nil {
@@ -277,13 +271,13 @@ func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId 
 
 	course, err := uc.GetByID(ctx, courseId)
 	if err != nil {
-		return ErrCourseNotFound
+		return ErrCourseNotFound.Build()
 	}
 
 	studentUUID, err := uuid.Parse(studentId)
 	if err != nil {
 
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	enrolled, err := uc.courseEnrollUseCase.CheckEnrollment(ctx, studentUUID, courseId)
@@ -292,7 +286,7 @@ func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId 
 	}
 
 	if enrolled {
-		return ErrAlreadyEnrolled // Define this error in your apierror package
+		return ErrAlreadyEnrolled.Build() // Define this error in your apierror package
 	}
 
 	err = uc.walletRepo.TransferByUserID(nil, studentUUID, course.InstructorID, course.Price)
@@ -370,7 +364,7 @@ func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string) ([]Cours
 	studentUUID, err := uuid.Parse(id)
 	if err != nil {
 
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 	courses, err := uc.courseEnrollUseCase.GetEnrollmentsByUser(ctx, studentUUID)
 
@@ -402,13 +396,13 @@ func (uc *UseCase) GetUserCourseProgress(ctx context.Context, courseId uuid.UUID
 
 	course, err := uc.GetByID(ctx, courseId)
 	if err != nil {
-		return 0, ErrCourseNotFound
+		return 0, ErrCourseNotFound.Build()
 	}
 
 	studentUUID, err := uuid.Parse(userId)
 	if err != nil {
 
-		return 0, apierror.ErrInternalServer
+		return 0, apierror.ErrInternalServer.Build()
 	}
 
 	return uc.courseRepo.GetUserCourseProgress(ctx, course.ID, studentUUID)

@@ -76,7 +76,7 @@ func (suite *NotificationUseCaseTestSuite) TestGetMy_InvalidUserID() {
 	_, err := suite.useCase.GetMy(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *NotificationUseCaseTestSuite) TestGetMy_RepoError() {
@@ -89,7 +89,7 @@ func (suite *NotificationUseCaseTestSuite) TestGetMy_RepoError() {
 	_, err := suite.useCase.GetMy(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 	suite.repo.AssertExpectations(suite.T())
 }
 
@@ -113,7 +113,7 @@ func (suite *NotificationUseCaseTestSuite) TestGetUnreadCount_InvalidUserID() {
 	_, err := suite.useCase.GetUnreadCount(ctx)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *NotificationUseCaseTestSuite) TestGetUnreadCount_RepoError() {
@@ -125,7 +125,7 @@ func (suite *NotificationUseCaseTestSuite) TestGetUnreadCount_RepoError() {
 	_, err := suite.useCase.GetUnreadCount(ctx)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 	suite.repo.AssertExpectations(suite.T())
 }
 
@@ -145,19 +145,19 @@ func (suite *NotificationUseCaseTestSuite) TestUpdateRead_InvalidNotificationID(
 	err := suite.useCase.UpdateRead("invalid-uuid")
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInvalidParamId, err)
+	assert.Equal(suite.T(), apierror.ErrInvalidParamId.Build(), err)
 }
 
 func (suite *NotificationUseCaseTestSuite) TestUpdateRead_RepoError() {
 	notificationID := uuid.New().String()
 	id, _ := uuid.Parse(notificationID)
 
-	suite.repo.On("UpdateRead", id).Return(apierror.ErrInternalServer)
+	suite.repo.On("UpdateRead", id).Return(gorm.ErrInvalidDB)
 
 	err := suite.useCase.UpdateRead(notificationID)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 	suite.repo.AssertExpectations(suite.T())
 }
 

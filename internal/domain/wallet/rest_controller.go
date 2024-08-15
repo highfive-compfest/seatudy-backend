@@ -42,14 +42,14 @@ func (c *RestController) TopUp() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req TopUpRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		res, err := c.uc.TopUp(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -79,7 +79,7 @@ func (c *RestController) GetBalance() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		res, err := c.uc.GetBalance(ctx)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -91,14 +91,14 @@ func (c *RestController) GetMidtransTransactions() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req GetMidtransTransactionsRequest
 		if err := ctx.ShouldBindQuery(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		res, err := c.uc.GetMidtransTransactionsByUser(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 

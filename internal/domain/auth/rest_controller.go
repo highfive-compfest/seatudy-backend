@@ -42,13 +42,13 @@ func (c *RestController) Register() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req RegisterRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		if err := c.uc.Register(&req); err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -60,7 +60,7 @@ func (c *RestController) Login() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req LoginRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
@@ -79,7 +79,7 @@ func (c *RestController) Refresh() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req RefreshRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
@@ -97,7 +97,7 @@ func (c *RestController) Refresh() gin.HandlerFunc {
 func (c *RestController) SendOTP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := c.uc.SendOTP(ctx); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
@@ -110,7 +110,7 @@ func (c *RestController) VerifyOTP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req VerifyEmailRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
@@ -128,7 +128,7 @@ func (c *RestController) SendResetPasswordLink() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req SendResetPasswordLinkRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
@@ -146,7 +146,7 @@ func (c *RestController) ResetPassword() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ResetPasswordRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
@@ -164,7 +164,7 @@ func (c *RestController) ChangePassword() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ChangePasswordRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}

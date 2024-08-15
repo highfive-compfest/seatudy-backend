@@ -6,6 +6,11 @@ import (
 )
 
 var (
-	ErrCourseAlreadyReviewed = apierror.ApiError{HttpStatus: http.StatusConflict, Message: "COURSE_ALREADY_REVIEWED"}
-	ErrReviewNotFound        = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "REVIEW_NOT_FOUND"}
+	ErrCourseAlreadyReviewed = apierror.NewApiErrorBuilder().
+					WithHttpStatus(http.StatusConflict).
+					WithMessage("COURSE_ALREADY_REVIEWED")
+
+	ErrReviewNotFound = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusNotFound).
+				WithMessage("REVIEW_NOT_FOUND")
 )

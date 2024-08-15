@@ -19,25 +19,25 @@ func NewRestController(r *gin.Engine, uc *UseCase) {
 	c := &RestController{useCase: uc}
 
 	attachmentsGroup := r.Group("/v1/attachments")
-    {
-        attachmentsGroup.PUT("/:id",middleware.Authenticate(), c.update)
-		attachmentsGroup.GET("/:id",middleware.Authenticate(), c.get)
-		attachmentsGroup.DELETE("/:id",middleware.Authenticate(),c.delete)
-		
+	{
+		attachmentsGroup.PUT("/:id", middleware.Authenticate(), c.update)
+		attachmentsGroup.GET("/:id", middleware.Authenticate(), c.get)
+		attachmentsGroup.DELETE("/:id", middleware.Authenticate(), c.delete)
+
 	}
 }
 
 func (c *RestController) get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		err = apierror.ErrInvalidParamId
+		err = apierror.ErrInvalidParamId.Build()
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
 		return
 	}
 	attachment, err := c.useCase.GetAttachmentByID(ctx, id)
 	if err != nil {
-		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
-        return
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
+		return
 	}
 	response.NewRestResponse(http.StatusOK, "Retrieve attachment successfully", attachment).Send(ctx)
 }
@@ -45,7 +45,7 @@ func (c *RestController) get(ctx *gin.Context) {
 func (c *RestController) update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		err = apierror.ErrInvalidParamId
+		err = apierror.ErrInvalidParamId.Build()
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
 		return
 	}
@@ -58,27 +58,24 @@ func (c *RestController) update(ctx *gin.Context) {
 	}
 	log.Println(req.File)
 
-
-
 	attachment, err := c.useCase.UpdateAttachment(ctx, id, req)
 	if err != nil {
-		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
-        return
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
+		return
 	}
 	response.NewRestResponse(http.StatusCreated, "Update attachment successfully", attachment).Send(ctx)
 }
 
-
 func (c *RestController) delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		err = apierror.ErrInvalidParamId
+		err = apierror.ErrInvalidParamId.Build()
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
 		return
 	}
 	if err := c.useCase.DeleteAttachment(ctx, id); err != nil {
-		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
-        return
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
+		return
 	}
-	response.NewRestResponse(http.StatusCreated, "Delete attachment successfully",nil).Send(ctx)
+	response.NewRestResponse(http.StatusCreated, "Delete attachment successfully", nil).Send(ctx)
 }

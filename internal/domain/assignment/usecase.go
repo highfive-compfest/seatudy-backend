@@ -10,7 +10,7 @@ import (
 )
 
 type UseCase struct {
-	repo Repository
+	repo              Repository
 	attachmentUseCase *attachment.UseCase // Add this line
 }
 
@@ -19,11 +19,10 @@ func NewUseCase(repo Repository, attachmentUseCase *attachment.UseCase) *UseCase
 }
 
 func (uc *UseCase) CreateAssignment(ctx context.Context, req CreateAssignmentRequest, courseId uuid.UUID) error {
-	
+
 	id, err := uuid.NewV7()
 	if err != nil {
-		
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 	assignment := &schema.Assignment{
 		ID:          id,
@@ -69,19 +68,17 @@ func (uc *UseCase) GetAssignmentsByCourse(ctx context.Context, courseId uuid.UUI
 func (uc *UseCase) AddAttachment(ctx context.Context, id uuid.UUID, req AttachmentInput) error {
 	ass, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return ErrAssignmentNotFound
+		return ErrAssignmentNotFound.Build()
 	}
 
 	if req.File != nil {
 
-		attachment, err := uc.attachmentUseCase.CreateAssignmentAttachment(ctx, req.File, req.Description,id)
+		attachment, err := uc.attachmentUseCase.CreateAssignmentAttachment(ctx, req.File, req.Description, id)
 		if err != nil {
-
-			return ErrS3UploadFail
+			return ErrS3UploadFail.Build()
 		}
 		ass.Attachments = append(ass.Attachments, attachment)
 	}
-
 
 	return uc.repo.Update(ctx, ass)
 }

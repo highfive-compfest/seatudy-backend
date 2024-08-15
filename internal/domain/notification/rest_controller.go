@@ -28,14 +28,14 @@ func (c *RestController) GetMy() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req GetByUserIDRequest
 		if err := ctx.ShouldBindQuery(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		notifications, err := c.useCase.GetMy(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -47,7 +47,7 @@ func (c *RestController) GetUnreadCount() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		count, err := c.useCase.GetUnreadCount(ctx)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -59,14 +59,14 @@ func (c *RestController) UpdateRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		if id == "" {
-			err := apierror.ErrInvalidParamId
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			err := apierror.ErrInvalidParamId.Build()
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
 		err := c.useCase.UpdateRead(id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 

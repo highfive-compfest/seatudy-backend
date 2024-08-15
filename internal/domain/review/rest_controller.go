@@ -42,14 +42,14 @@ func (c *RestController) Create() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req CreateReviewRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		res, err := c.uc.Create(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -61,14 +61,14 @@ func (c *RestController) Get() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req GetReviewsRequest
 		if err := ctx.ShouldBindQuery(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		res, err := c.uc.Get(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -80,20 +80,20 @@ func (c *RestController) Update() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req UpdateReviewRequest
 		if err := ctx.ShouldBindUri(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		err := c.uc.Update(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -105,14 +105,14 @@ func (c *RestController) Delete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req DeleteReviewRequest
 		if err := ctx.ShouldBindUri(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		err := c.uc.Delete(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 

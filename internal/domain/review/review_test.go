@@ -102,8 +102,8 @@ func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, 
 	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
 }
 
-func (m *MockCourseRepository) DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error){
-	args := m.Called(ctx, filterType,filterValue,sort, page, limit)
+func (m *MockCourseRepository) DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error) {
+	args := m.Called(ctx, filterType, filterValue, sort, page, limit)
 	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
 }
 
@@ -181,7 +181,7 @@ func (suite *ReviewUseCaseTestSuite) TestCreateReview_InvalidUserID() {
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), res)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *ReviewUseCaseTestSuite) TestCreateReview_NotEnrolled() {
@@ -199,7 +199,7 @@ func (suite *ReviewUseCaseTestSuite) TestCreateReview_NotEnrolled() {
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), res)
-	assert.Equal(suite.T(), courseenroll.ErrNotEnrolled, err)
+	assert.Equal(suite.T(), courseenroll.ErrNotEnrolled.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 }
 
@@ -219,7 +219,7 @@ func (suite *ReviewUseCaseTestSuite) TestCreateReview_CourseNotFound() {
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), res)
-	assert.Equal(suite.T(), course.ErrCourseNotFound, err)
+	assert.Equal(suite.T(), course.ErrCourseNotFound.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 }
 
@@ -243,7 +243,7 @@ func (suite *ReviewUseCaseTestSuite) TestCreateReview_AlreadyReviewed() {
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), res)
-	assert.Equal(suite.T(), ErrCourseAlreadyReviewed, err)
+	assert.Equal(suite.T(), ErrCourseAlreadyReviewed.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 	suite.reviewRepo.AssertExpectations(suite.T())
 }
@@ -310,7 +310,7 @@ func (suite *ReviewUseCaseTestSuite) TestUpdateReview_NotFound() {
 	err := suite.reviewUseCase.Update(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrReviewNotFound, err)
+	assert.Equal(suite.T(), ErrReviewNotFound.Build(), err)
 	suite.reviewRepo.AssertExpectations(suite.T())
 }
 
@@ -335,7 +335,7 @@ func (suite *ReviewUseCaseTestSuite) TestUpdateReview_NotYourResource() {
 	err := suite.reviewUseCase.Update(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrNotYourResource, err)
+	assert.Equal(suite.T(), apierror.ErrNotYourResource.Build(), err)
 	suite.reviewRepo.AssertExpectations(suite.T())
 }
 
@@ -373,7 +373,7 @@ func (suite *ReviewUseCaseTestSuite) TestDeleteReview_NotFound() {
 	err := suite.reviewUseCase.Delete(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrReviewNotFound, err)
+	assert.Equal(suite.T(), ErrReviewNotFound.Build(), err)
 	suite.reviewRepo.AssertExpectations(suite.T())
 }
 
@@ -396,7 +396,7 @@ func (suite *ReviewUseCaseTestSuite) TestDeleteReview_NotYourResource() {
 	err := suite.reviewUseCase.Delete(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrNotYourResource, err)
+	assert.Equal(suite.T(), apierror.ErrNotYourResource.Build(), err)
 	suite.reviewRepo.AssertExpectations(suite.T())
 }
 
