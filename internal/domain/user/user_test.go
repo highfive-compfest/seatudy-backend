@@ -18,6 +18,8 @@ type MockRepository struct {
 	mock.Mock
 }
 
+
+
 func (m *MockRepository) Create(user *schema.User) error {
 	args := m.Called(user)
 	return args.Error(0)
@@ -51,15 +53,27 @@ func (m *MockRepository) UpdateByEmail(email string, user *schema.User) error {
 	return args.Error(0)
 }
 
+type MockFileUploader struct {
+	mock.Mock
+}
+
+func (m *MockFileUploader) UploadFile(key string, fileHeader *multipart.FileHeader) (string, error) {
+	args := m.Called(key, fileHeader)
+	return args.String(0), args.Error(1)
+}
+
+
 type UseCaseTestSuite struct {
 	suite.Suite
 	repo    *MockRepository
 	useCase *UseCase
+	uploader *MockFileUploader
 }
 
 func (suite *UseCaseTestSuite) SetupTest() {
 	suite.repo = new(MockRepository)
-	suite.useCase = NewUseCase(suite.repo)
+	suite.uploader = new(MockFileUploader)
+	suite.useCase = NewUseCase(suite.repo, suite.uploader)
 }
 
 func (suite *UseCaseTestSuite) TestGetMe_Success() {

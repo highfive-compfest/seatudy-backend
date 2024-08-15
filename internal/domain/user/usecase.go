@@ -16,10 +16,11 @@ import (
 
 type UseCase struct {
 	repo IRepository
+	uploader config.FileUploader
 }
 
-func NewUseCase(repo IRepository) *UseCase {
-	return &UseCase{repo: repo}
+func NewUseCase(repo IRepository, uploader config.FileUploader) *UseCase {
+	return &UseCase{repo: repo, uploader: uploader}
 }
 
 func (uc *UseCase) GetMe(ctx context.Context) (*schema.User, error) {
@@ -93,7 +94,7 @@ func (uc *UseCase) Update(ctx context.Context, req *UpdateUserRequest) error {
 			return err2
 		}
 
-		imageUrl, err = config.UploadFile(
+		imageUrl, err = uc.uploader.UploadFile(
 			"users/avatar/"+userID.String()+"."+strings.Split(fileType, "/")[1],
 			req.ImageFile,
 		)

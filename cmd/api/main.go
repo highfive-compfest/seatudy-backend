@@ -55,7 +55,11 @@ func main() {
 	engine := config.NewGin()
 	engine.Use(middleware.CORS())
 
-	config.InitializeS3()
+	uploader, err := config.InitializeS3()
+
+	if err != nil {
+		log.Println("fail to connect s3 bucket", err)
+	}
 
 	// Notification
 	notificationRepo := notification.NewRepository(db)
@@ -71,7 +75,7 @@ func main() {
 
 	// User
 	userRepo := user.NewRepository(db, walletRepo)
-	userUseCase := user.NewUseCase(userRepo)
+	userUseCase := user.NewUseCase(userRepo,uploader)
 	user.NewRestController(engine, userUseCase)
 
 	// Auth
@@ -84,12 +88,12 @@ func main() {
 
 	// Course
 	courseRepo := course.NewRepository(db)
-	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase, userRepo, notificationRepo, mailDialer)
+	courseUseCase := course.NewUseCase(courseRepo, walletRepo, *courseEnrollUseCase, userRepo, notificationRepo, mailDialer,uploader)
 	course.NewRestController(engine, courseUseCase, walletUseCase)
 
 	// Attachment
 	attachmentRepo := attachment.NewRepository(db)
-	attachmentUseCase := attachment.NewUseCase(attachmentRepo)
+	attachmentUseCase := attachment.NewUseCase(attachmentRepo,uploader)
 	attachment.NewRestController(engine, attachmentUseCase)
 
 	// Assignment
