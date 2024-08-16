@@ -337,11 +337,20 @@ func (suite *SubmissionUseCaseTestSuite) TestGradeSubmission_Success() {
 		ID:           courseId,
 		InstructorID: userId,
 	}
+	instructorID := uuid.New()
+	instructor := &schema.User{
+		ID:   instructorID,
+		Name: "Jane Instructor",
+		Email: "jane.instructor@example.com",
+	}
 
 	suite.submissionRepo.On("GetByID", ctx, mock.Anything).Return(submission, nil)
 	suite.assignmentRepo.On("GetByID", ctx, mock.Anything).Return(assignment, nil)
 	suite.courseRepo.On("GetByID", ctx, mock.Anything).Return(*course, nil)
 	suite.submissionRepo.On("Update", ctx, submission).Return(nil)
+	suite.userRepo.On("GetByID", mock.Anything).Return(instructor, nil)
+	suite.mailer.On("DialAndSend", mock.Anything).Return(nil)
+	suite.notificationRepo.On("Create", mock.AnythingOfType("*schema.Notification")).Return(nil)
 
 	// Call the function under test
 	err := suite.submisionUseCase.GradeSubmission(ctx, userId.String(), submissionId, grade)
