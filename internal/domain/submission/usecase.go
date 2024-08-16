@@ -4,19 +4,18 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/highfive-compfest/seatudy-backend/internal/config"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/notification"
-	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
-	"github.com/highfive-compfest/seatudy-backend/internal/mailer"
-	"log"
-
 	"github.com/google/uuid"
 	"github.com/highfive-compfest/seatudy-backend/internal/apierror"
+	"github.com/highfive-compfest/seatudy-backend/internal/config"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/assignment"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/attachment"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/course"
 	"github.com/highfive-compfest/seatudy-backend/internal/domain/courseenroll"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/notification"
+	"github.com/highfive-compfest/seatudy-backend/internal/domain/user"
+	"github.com/highfive-compfest/seatudy-backend/internal/mailer"
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
+	"log"
 )
 
 type UseCase struct {
@@ -158,36 +157,92 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 	return nil
 }
 
+//go:embed submission_graded_student_email_template.html
+var submissionGradedStudentEmailTemplate string
+
 func (uc *UseCase) GradeSubmission(ctx context.Context, userId string, id uuid.UUID, grade float64) error {
 	submission, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	
 
-	assignment, err := uc.assignmentRepo.GetByID(ctx, submission.AssignmentID)
+
+	assignmentObj, err := uc.assignmentRepo.GetByID(ctx, submission.AssignmentID)
 	if err != nil {
 		return err
 	}
 
 
 
-	courseId := assignment.CourseID
+	courseId := assignmentObj.CourseID
 	// Get the course to verify the instructor ID
-	course, err := uc.courseRepo.GetByID(ctx, courseId)
+	courseObj, err := uc.courseRepo.GetByID(ctx, courseId)
 	if err != nil {
 		return err
 	}
 
 
 	// Check if the current user is the instructor of the course
-	if course.InstructorID.String() != userId {
+	if courseObj.InstructorID.String() != userId {
 		return ErrNotOwnerCourse
 	}
 
 	submission.Grade = grade
-	return uc.repo.Update(ctx, submission)
+	if err := uc.repo.Update(ctx, submission); err != nil {
+		log.Println("Error updating submission: ", err)
+		return err
+	}
+
+	// Send email to student
+	go func() {
+		student, err := uc.userRepo.GetByID(submission.UserID)
+		if err != nil {
+			log.Println("Error getting student: ", err)
+			return
+		}
+
+		emailData := map[string]any{
+			"student_name":     student.Name,
+			"course_title":     courseObj.Title,
+			"assignment_title": assignmentObj.Title,
+			"grade":            grade,
+		}
+
+		mail, err := mailer.GenerateMail(student.Email, "Assignment Graded",
+			submissionGradedStudentEmailTemplate, emailData)
+		if err != nil {
+			log.Println("Error generating email: ", err)
+			return
+		}
+
+		if err = uc.mailDialer.DialAndSend(mail); err != nil {
+			log.Println("Error sending email: ", err)
+			return
+		}
+	}()
+
+	// Send in-app notification to student
+	go func() {
+		notifID, err := uuid.NewV7()
+		if err != nil {
+			return
+		}
+
+		notif := schema.Notification{
+			ID:     notifID,
+			UserID: submission.UserID,
+			Title:  "Assignment Graded",
+			Detail: fmt.Sprintf("Your submission for %s in course %s has been graded", assignmentObj.Title, courseObj.Title),
+		}
+
+		if err := uc.notifRepo.Create(&notif); err != nil {
+			log.Println("Error creating notification: ", err)
+			return
+		}
+	}()
+
+	return nil
 }
 
 // UpdateSubmission handles the business logic for updating an existing submission.
@@ -276,7 +331,7 @@ func (uc *UseCase) CheckSubmissionExists(ctx context.Context, userID uuid.UUID, 
 		return err
 	}
 	if exists {
-		return ErrSubmissionAlreadyExists 
+		return ErrSubmissionAlreadyExists
 	}
 	return nil
 }
