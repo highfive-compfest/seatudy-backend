@@ -56,3 +56,7 @@ Before you begin, ensure you have the these installed on your machine:
    ```bash
    docker compose up
    ```
+
+## Backend Developers
+- **Benardo** - Institut Teknologi Bandung
+- **I Putu Natha Kusuma** - Universitas Brawijaya
