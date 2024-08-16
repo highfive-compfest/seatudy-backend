@@ -337,7 +337,7 @@ func (c *RestController) GetStudentProgress() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		var req CourseProgress
-		if err := ctx.ShouldBindJSON(&req); err != nil {
+		if err := ctx.ShouldBindQuery(&req); err != nil {
 			response.NewRestResponse(http.StatusBadRequest, "Invalid user id: "+err.Error(), nil).Send(ctx)
 			return
 		}
