@@ -16,25 +16,25 @@ type MockRepository struct {
 	mock.Mock
 }
 
-// Create mocks the Create method
+
 func (m *MockRepository) Create(ctx context.Context, att *schema.Attachment) error {
 	args := m.Called(ctx, att)
 	return args.Error(0)
 }
 
-// Update mocks the Update method
+
 func (m *MockRepository) Update(ctx context.Context, att *schema.Attachment) error {
 	args := m.Called(ctx, att)
 	return args.Error(0)
 }
 
-// GetByID mocks the GetByID method
+
 func (m *MockRepository) GetByID(ctx context.Context, id uuid.UUID) (*schema.Attachment, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(*schema.Attachment), args.Error(1)
 }
 
-// Delete mocks the Delete method
+
 func (m *MockRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -78,13 +78,13 @@ func (suite *AttachmentUseCaseTestSuite) TestCreateAttachment_Success() {
 
 	suite.uploader.On("UploadFile", mock.AnythingOfType("string"), mock.AnythingOfType("*multipart.FileHeader")).Return(expectedURL, nil)
 
-	// Mocking the UploadFile and Create repository call
+
 	suite.attachmentRepo.On("Create", ctx, mock.AnythingOfType("*schema.Attachment")).Return(nil)
 
-	// Call the function that uses the repository
+
 	createdAttachment, err := suite.attachmentUseCase.CreateAttachment(ctx, fileHeader, description, materialID)
 
-	// Assert expectations
+
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), createdAttachment.ID)
 	assert.Equal(suite.T(), attachment.URL, createdAttachment.URL)
@@ -108,12 +108,12 @@ func (suite *AttachmentUseCaseTestSuite) TestCreateAssignmentAttachment_Success(
 	suite.uploader.On("UploadFile", mock.AnythingOfType("string"), mock.AnythingOfType("*multipart.FileHeader")).Return(expectedURL, nil)
 
 
-	// Mock the repository's Create method
+
 	suite.attachmentRepo.On("Create", ctx, mock.AnythingOfType("*schema.Attachment")).Return(nil)
 
 	createdAttachment, err := suite.attachmentUseCase.CreateAssignmentAttachment(ctx, fileHeader, description, assignmentID)
 
-	// Assert expectations
+
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), createdAttachment.ID)
 	assert.Equal(suite.T(), attachment.URL, createdAttachment.URL)
@@ -122,7 +122,7 @@ func (suite *AttachmentUseCaseTestSuite) TestCreateAssignmentAttachment_Success(
 
 func (suite *AttachmentUseCaseTestSuite) TestCreateSubmissionAttachment_Success() {
 	ctx := context.Background()
-	fileHeader := &multipart.FileHeader{Filename: "submission.pdf", Size: 1 * 1024 * 1024} // Assuming 1MB size
+	fileHeader := &multipart.FileHeader{Filename: "submission.pdf", Size: 1 * 1024 * 1024} 
 	description := "Submission Attachment Description"
 
 	expectedURL := "http://example.com/submission.pdf"
@@ -134,12 +134,11 @@ func (suite *AttachmentUseCaseTestSuite) TestCreateSubmissionAttachment_Success(
 
 	suite.uploader.On("UploadFile", mock.AnythingOfType("string"), mock.AnythingOfType("*multipart.FileHeader")).Return(expectedURL, nil)
 
-	// Mock the repository's Create method
+
 	suite.attachmentRepo.On("Create", ctx, mock.AnythingOfType("*schema.Attachment")).Return(nil)
 
 	createdAttachment, err := suite.attachmentUseCase.CreateSubmissionAttachment(ctx, fileHeader, description)
 
-	// Assert expectations
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), createdAttachment.ID)
 	assert.Equal(suite.T(), attachment.URL, createdAttachment.URL)
@@ -164,7 +163,7 @@ func (suite *AttachmentUseCaseTestSuite) TestGetAttachmentByID_Success() {
 	suite.attachmentRepo.AssertExpectations(suite.T())
 }
 
-// Test updating an attachment successfully
+
 func (suite *AttachmentUseCaseTestSuite) TestUpdateAttachment_Success() {
 	ctx := context.Background()
 	id := uuid.New()
@@ -200,7 +199,7 @@ func (suite *AttachmentUseCaseTestSuite) TestUpdateAttachment_Success() {
 	suite.attachmentRepo.AssertExpectations(suite.T())
 }
 
-// Test deleting an attachment successfully
+
 func (suite *AttachmentUseCaseTestSuite) TestDeleteAttachment_Success() {
 	ctx := context.Background()
 	id := uuid.New()

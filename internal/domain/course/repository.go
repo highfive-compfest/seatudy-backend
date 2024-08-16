@@ -46,10 +46,10 @@ func (r *repository) GetAll(ctx context.Context, page, pageSize int) ([]schema.C
 func (r *repository) FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error) {
     var courses []schema.Course
 
-    // Use a raw SQL expression for the subquery to count enrollments
+
     enrollmentCountSQL := "(SELECT COUNT(*) FROM course_enrolls WHERE course_enrolls.course_id = courses.id)"
 
-    // Query to fetch courses ordered by enrollment count and then by rating
+
     result := r.db.Model(&schema.Course{}).
         Select("courses.*, " + enrollmentCountSQL + " as enrollment_count").
         Order("enrollment_count DESC").
@@ -86,7 +86,7 @@ func (r *repository) GetUserCourseProgress(ctx context.Context, courseID, userID
 	
 		log.Println(totalAssignments)
 		log.Println(completedAssignments)
-	// Calculate progress as a percentage
+
 	var progress float64
 	if totalAssignments > 0 {
 		progress = (float64(completedAssignments) / float64(totalAssignments)) * 100
@@ -157,7 +157,7 @@ func (r *repository) DynamicFilterCourses(ctx context.Context, filterType, filte
     case "difficulty":
         query = query.Where("difficulty = ?", filterValue)
     case "rating":
-		rating, _ := strconv.ParseFloat(filterValue, 32) // Assuming filterValue is a string; handle errors as needed
+		rating, _ := strconv.ParseFloat(filterValue, 32) 
         upperBound := rating + 1.0
         query = query.Where("rating >= ? AND rating < ?", rating, upperBound)
     }
@@ -168,15 +168,13 @@ func (r *repository) DynamicFilterCourses(ctx context.Context, filterType, filte
         query = query.Order("rating ASC")
     }
 
-    // Count total results for pagination before limiting and offsetting
+
     if err := query.Count(&total).Error; err != nil {
         return nil, 0, err
     }
 
-    // Apply pagination
     query = query.Offset((page - 1) * limit).Limit(limit)
 
-    // Execute the final query to retrieve the filtered courses
     if err := query.Find(&courses).Error; err != nil {
         return nil, 0, err
     }

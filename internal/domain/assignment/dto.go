@@ -32,6 +32,6 @@ type AssignmentResponse struct {
 
 
 type AttachmentInput struct {
-    File        *multipart.FileHeader `form:"file" binding:"required"` // The actual file
-    Description string                `form:"description"`             // Optional description
+    File        *multipart.FileHeader `form:"file" binding:"required"` 
+    Description string                `form:"description"`            
 }

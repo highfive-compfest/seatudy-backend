@@ -278,7 +278,7 @@ func (uc *UseCase) CheckSubmissionExists(ctx context.Context, userID uuid.UUID, 
 		return err
 	}
 	if exists {
-		return ErrSubmissionAlreadyExists // Define this error in your errors package
+		return ErrSubmissionAlreadyExists 
 	}
 	return nil
 }
