@@ -45,14 +45,27 @@ func (r *repository) GetAll(ctx context.Context, page, pageSize int) ([]schema.C
 
 func (r *repository) FindByPopularity(ctx context.Context, page, pageSize int) ([]schema.Course, int, error) {
     var courses []schema.Course
-    result := r.db.Order("rating DESC").Preload("Materials.Attachments").Preload("Assignments.Attachments").Offset((page - 1) * pageSize).Limit(pageSize).Find(&courses)
+
+    // Use a raw SQL expression for the subquery to count enrollments
+    enrollmentCountSQL := "(SELECT COUNT(*) FROM course_enrolls WHERE course_enrolls.course_id = courses.id)"
+
+    // Query to fetch courses ordered by enrollment count and then by rating
+    result := r.db.Model(&schema.Course{}).
+        Select("courses.*, " + enrollmentCountSQL + " as enrollment_count").
+        Order("enrollment_count DESC").
+        Order("rating DESC").
+        Preload("Materials.Attachments").
+        Preload("Assignments.Attachments").
+        Offset((page - 1) * pageSize).
+        Limit(pageSize).
+        Find(&courses)
     if result.Error != nil {
-        return nil,0, result.Error
+        return nil, 0, result.Error
     }
 
-	var totalRecords int64
+    var totalRecords int64
     r.db.Model(&schema.Course{}).Count(&totalRecords)
-    return courses,int(totalRecords), nil
+    return courses, int(totalRecords), nil
 }
 
 func (r *repository) GetUserCourseProgress(ctx context.Context, courseID, userID uuid.UUID) (float64, error) {
