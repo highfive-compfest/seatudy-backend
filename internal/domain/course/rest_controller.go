@@ -1,7 +1,6 @@
 package course
 
 import (
-
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,12 @@ func NewRestController(router *gin.Engine, uc *UseCase, wuc *wallet.UseCase) {
 	{
 		courseGroup.GET("", controller.GetAll())
 		courseGroup.GET("/:id", controller.GetByID())
-		courseGroup.POST("", middleware.Authenticate(), middleware.RequireRole("instructor"), controller.Create())
+		courseGroup.POST("",
+			middleware.Authenticate(),
+			middleware.RequireEmailVerified(),
+			middleware.RequireRole("instructor"),
+			controller.Create(),
+		)
 		courseGroup.PUT("/:id", middleware.Authenticate(), middleware.RequireRole("instructor"), controller.Update())
 		courseGroup.POST("/buy/:id", middleware.Authenticate(), middleware.RequireEmailVerified(), middleware.RequireRole("student"), controller.BuyCourse())
 		courseGroup.GET("/instructor/:id", middleware.Authenticate(), controller.GetInstructorCourse())
@@ -138,8 +142,6 @@ func (c *RestController) GetCourseEnrollments() gin.HandlerFunc {
 			response.NewRestResponse(http.StatusInternalServerError, "Failed to retrieve enrollments", err.Error()).Send(ctx)
 			return
 		}
-
-
 
 		if len(users) == 0 {
 			response.NewRestResponse(http.StatusOK, "No enrollments found for this course", nil).Send(ctx)
