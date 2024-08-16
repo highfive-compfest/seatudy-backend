@@ -1,7 +1,7 @@
 package attachment
 
 import (
-	"log"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -56,7 +56,7 @@ func (c *RestController) update(ctx *gin.Context) {
 		return
 
 	}
-	log.Println(req.File)
+
 
 	attachment, err := c.useCase.UpdateAttachment(ctx, id, req)
 	if err != nil {

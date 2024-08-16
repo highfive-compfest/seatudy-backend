@@ -217,36 +217,4 @@ func (c *RestController) verifyMaterialOwnership(ctx *gin.Context, materialID uu
 	return nil
 }
 
-// func extractAttachments(ctx *gin.Context) ([]AttachmentInput, error) {
-// 	attachments := []AttachmentInput{}
 
-// 	form, err := ctx.MultipartForm()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error retrieving multipart form: %w", err)
-// 	}
-
-// 	fileHeaders := form.File
-// 	for i := 0; ; i++ {
-// 		fileKey := fmt.Sprintf("attachments[%d][file]", i)
-// 		descriptionKey := fmt.Sprintf("attachments[%d][description]", i)
-
-// 		files, found := fileHeaders[fileKey]
-// 		if !found {
-// 			break
-// 		}
-
-// 		description := ""
-// 		if desc, ok := form.Value[descriptionKey]; ok && len(desc) > 0 {
-// 			description = desc[0]
-// 		}
-
-// 		if len(files) > 0 {
-// 			attachments = append(attachments, AttachmentInput{
-// 				File:        files[0],
-// 				Description: description,
-// 			})
-// 		}
-// 	}
-
-// 	return attachments, nil
-// }

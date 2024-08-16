@@ -653,14 +653,14 @@ func (suite *CourseUseCaseTestSuite) TestGetEnrollmentsByUser_Failure() {
 	ctx := context.Background()
 	studentId, _ := uuid.NewV7()
 
-	// Return an empty slice and an error
+
 	suite.enrollRepo.On("GetCoursesByUserID", ctx, studentId).Return([]schema.Course{},
 		apierror.ErrInternalServer.Build())
 
 	courses, err := suite.courseUseCase.GetEnrollmentsByUser(ctx, studentId.String())
 
 	assert.Error(suite.T(), err)
-	assert.Nil(suite.T(), courses) // This may need to be adjusted based on actual method implementation
+	assert.Nil(suite.T(), courses) 
 	suite.enrollRepo.AssertExpectations(suite.T())
 }
 

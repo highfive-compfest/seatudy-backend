@@ -8,9 +8,9 @@ import (
 )
 
 type CreateAssignmentRequest struct {
-	CourseID    string `json:"course_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
+	CourseID    string     `json:"course_id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
 	Due         *time.Time `json:"due,omitempty"`
 }
 
@@ -30,8 +30,7 @@ type AssignmentResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-
 type AttachmentInput struct {
-    File        *multipart.FileHeader `form:"file" binding:"required"` // The actual file
-    Description string                `form:"description"`             // Optional description
+	File        *multipart.FileHeader `form:"file" binding:"required"`
+	Description string                `form:"description"`
 }

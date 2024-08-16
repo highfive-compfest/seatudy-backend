@@ -148,7 +148,7 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 		}
 	}
 
-	// Create course entity
+
 	course := schema.Course{
 		Title:        req.Title,
 		Description:  req.Description,
@@ -165,13 +165,13 @@ func (uc *UseCase) Create(ctx context.Context, req CreateCourseRequest, imageFil
 }
 
 func (uc *UseCase) Update(ctx context.Context, req UpdateCourseRequest, id uuid.UUID, imageFile, syllabusFile *multipart.FileHeader) (schema.Course, error) {
-	// Fetch the existing course to update
+
 	course, err := uc.courseRepo.GetByID(ctx, id)
 	if err != nil {
 		return schema.Course{}, ErrCourseNotFound.Build()
 	}
 
-	// Update fields if provided
+
 	if req.Title != nil {
 		course.Title = *req.Title
 	}
@@ -286,7 +286,7 @@ func (uc *UseCase) BuyCourse(ctx context.Context, courseId uuid.UUID, studentId 
 	}
 
 	if enrolled {
-		return ErrAlreadyEnrolled.Build() // Define this error in your apierror package
+		return ErrAlreadyEnrolled.Build() 
 	}
 
 	err = uc.walletRepo.TransferByUserID(nil, studentUUID, course.InstructorID, course.Price)
@@ -355,7 +355,7 @@ func (uc *UseCase) GetEnrollmentsByCourse(ctx context.Context, id uuid.UUID) ([]
 	users, err := uc.courseEnrollUseCase.GetEnrollmentsByCourse(ctx, id)
 
 	if err != nil {
-		return nil, err // Return an error if it occurs
+		return nil, err 
 	}
 	return users, nil
 }
@@ -369,13 +369,13 @@ func (uc *UseCase) GetEnrollmentsByUser(ctx context.Context, id string) ([]Cours
 	courses, err := uc.courseEnrollUseCase.GetEnrollmentsByUser(ctx, studentUUID)
 
 	if err != nil {
-		return nil, err // Return an error if it occurs
+		return nil, err 
 	}
 	var courseProgressResponses []CourseProgressResponse
 	for _, course := range courses {
 		progress, err := uc.GetUserCourseProgress(ctx, course.ID, id)
 		if err != nil {
-			// Decide how to handle errors here - skip or return error
+
 			continue
 		}
 
@@ -411,7 +411,7 @@ func (uc *UseCase) GetUserCourseProgress(ctx context.Context, courseId uuid.UUID
 func (uc *UseCase) FilterCourses(ctx context.Context, req FilterCoursesRequest) (*CoursesPaginatedResponse, error) {
 	var filterType, filterValue, sort string
 
-	// Determine which filter type and value to use based on non-nil pointers
+
 	if req.Category != nil {
 		filterType = "category"
 		filterValue = string(*req.Category)

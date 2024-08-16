@@ -4,7 +4,6 @@ package attachment
 
 import (
 	"context"
-	"log"
 
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 
@@ -25,38 +24,21 @@ func NewUseCase(repo Repository, uploader config.FileUploader) *UseCase {
 }
 
 func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.FileHeader, description string, materialID uuid.UUID) (schema.Attachment, error) {
-	// Validate file type
-	// fileType, err := fileutil.DetectMultipartFileType(fileHeader)
-
-	// if err != nil {
-	// 	log.Println("Error detecting file type: ", err)
-	// 	return uuid.Nil,apierror.ErrInternalServer
-	// }
-
-	// allowedTypes := fileutil.ImageContentTypes
-	// if !slices.Contains(allowedTypes, fileType) {
-	// 	err2 := apierror.ErrInvalidFileType
-	// 	apierror.AddPayload(&err2, map[string]any{
-	// 		"allowed_types": allowedTypes,
-	// 		"received_type": fileType,
-	// 	})
-	// 	return uuid.Nil, err2
-	// }
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Println("Error generating UUID: ", err)
+	
 		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
-	log.Println("masuk ini")
-	// Upload file and get URL
+
+
 	fileURL, err := auc.uploader.UploadFile("attachments/material/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
 		return schema.Attachment{}, err
 	}
 
-	// Create attachment record
+
 	att := schema.Attachment{
 		ID:          id,
 		URL:         fileURL,
@@ -74,18 +56,18 @@ func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Println("Error generating UUID: ", err)
+
 		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
-	log.Println("masuk ini")
-	// Upload file and get URL
+
+
 	fileURL, err := auc.uploader.UploadFile("attachments/assignment/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
 		return schema.Attachment{}, err
 	}
 
-	// Create attachment record
+
 	att := schema.Attachment{
 		ID:           id,
 		URL:          fileURL,
@@ -103,18 +85,18 @@ func (auc *UseCase) CreateSubmissionAttachment(ctx context.Context, fileHeader *
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Println("Error generating UUID: ", err)
+
 		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
-	log.Println("masuk ini")
-	// Upload file and get URL
+
+
 	fileURL, err := auc.uploader.UploadFile("attachments/submission/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
 		return schema.Attachment{}, err
 	}
 
-	// Create attachment record
+
 	att := schema.Attachment{
 		ID:          id,
 		URL:         fileURL,

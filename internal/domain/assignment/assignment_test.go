@@ -18,31 +18,26 @@ type MockRepository struct {
 	mock.Mock
 }
 
-// Create mocks the Create method
 func (m *MockRepository) Create(ctx context.Context, a *schema.Assignment) error {
 	args := m.Called(ctx, a)
 	return args.Error(0)
 }
 
-// Update mocks the Update method
 func (m *MockRepository) Update(ctx context.Context, a *schema.Assignment) error {
 	args := m.Called(ctx, a)
 	return args.Error(0)
 }
 
-// Delete mocks the Delete method
 func (m *MockRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-// GetByID mocks the GetByID method
 func (m *MockRepository) GetByID(ctx context.Context, id uuid.UUID) (*schema.Assignment, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(*schema.Assignment), args.Error(1)
 }
 
-// GetByCourseID mocks the GetByCourseID method
 func (m *MockRepository) GetByCourseID(ctx context.Context, courseId uuid.UUID) ([]*schema.Assignment, error) {
 	args := m.Called(ctx, courseId)
 	return args.Get(0).([]*schema.Assignment), args.Error(1)
@@ -52,25 +47,21 @@ type MockAttachmentRepository struct {
 	mock.Mock
 }
 
-// Create mocks the Create method
 func (m *MockAttachmentRepository) Create(ctx context.Context, att *schema.Attachment) error {
 	args := m.Called(ctx, att)
 	return args.Error(0)
 }
 
-// Update mocks the Update method
 func (m *MockAttachmentRepository) Update(ctx context.Context, att *schema.Attachment) error {
 	args := m.Called(ctx, att)
 	return args.Error(0)
 }
 
-// GetByID mocks the GetByID method
 func (m *MockAttachmentRepository) GetByID(ctx context.Context, id uuid.UUID) (*schema.Attachment, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(*schema.Attachment), args.Error(1)
 }
 
-// Delete mocks the Delete method
 func (m *MockAttachmentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
