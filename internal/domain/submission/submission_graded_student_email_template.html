@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Graded Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f9fc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            background-color: #0077b6;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content h2 {
+            color: #0077b6;
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+        .content p {
+            margin: 0 0 10px 0;
+        }
+        .content .grade-details {
+            margin-top: 20px;
+        }
+        .content .grade-details h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: #555;
+        }
+        .content .grade-details p {
+            margin: 0;
+            font-size: 16px;
+            color: #777;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #0077b6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Assignment Graded!</h1>
+    </div>
+    <div class="content">
+        <h2>Hello, {{.student_name}}</h2>
+        <p>Good news! Your submission for the assignment <strong>"{{.assignment_title}}"</strong> in the course <strong>"{{.course_title}}"</strong> has been graded by your instructor.</p>
+        <div class="grade-details">
+            <h3>Grade Details:</h3>
+            <p><strong>Grade:</strong> {{.grade}}</p>
+        </div>
+        <p>You can review your grade and feedback in your Seatudy dashboard. Keep up the great work!</p>
+    </div>
+    <div class="footer">
+        <p>Need help? <a href="mailto:support@seatudy.nathakusuma.com">Contact Support</a></p>
+        <p>&copy; 2024 Seatudy. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
