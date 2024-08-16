@@ -40,14 +40,14 @@ func (c *RestController) CreateDiscussion() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req CreateForumDiscussionRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		err := c.uc.CreateDiscussion(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -61,7 +61,7 @@ func (c *RestController) GetDiscussionByID() gin.HandlerFunc {
 
 		discussion, err := c.uc.GetDiscussionByID(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -73,14 +73,14 @@ func (c *RestController) GetDiscussionsByCourseID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req GetForumDiscussionsRequest
 		if err := ctx.ShouldBindQuery(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		res, err := c.uc.GetDiscussionsByCourseID(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -92,19 +92,19 @@ func (c *RestController) UpdateDiscussion() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req UpdateForumDiscussionRequest
 		if err := ctx.ShouldBindUri(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		err := c.uc.UpdateDiscussion(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -118,7 +118,7 @@ func (c *RestController) DeleteDiscussion() gin.HandlerFunc {
 
 		err := c.uc.DeleteDiscussion(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -130,14 +130,14 @@ func (c *RestController) CreateReply() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req CreateForumReplyRequest
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		err := c.uc.CreateReply(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -151,7 +151,7 @@ func (c *RestController) GetReplyByID() gin.HandlerFunc {
 
 		reply, err := c.uc.GetReplyByID(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -163,14 +163,14 @@ func (c *RestController) GetRepliesByDiscussionID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req GetForumRepliesRequest
 		if err := ctx.ShouldBindQuery(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		res, err := c.uc.GetRepliesByDiscussionID(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -182,19 +182,19 @@ func (c *RestController) UpdateReply() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req UpdateForumReplyRequest
 		if err := ctx.ShouldBindUri(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			err2 := apierror.ErrValidation
+			err2 := apierror.ErrValidation.Build()
 			response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 			return
 		}
 
 		err := c.uc.UpdateReply(ctx, &req)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
@@ -208,7 +208,7 @@ func (c *RestController) DeleteReply() gin.HandlerFunc {
 
 		err := c.uc.DeleteReply(ctx, id)
 		if err != nil {
-			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 

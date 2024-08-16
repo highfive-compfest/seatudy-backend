@@ -26,13 +26,13 @@ func (uc *UseCase) CreateMaterial(ctx context.Context, req CreateMaterialRequest
 	courseId, err := uuid.Parse(req.CourseID)
 
 	if err != nil {
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 
 	}
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Println("Error generating UUID: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 	mat := schema.Material{
 		ID:          id,
@@ -55,7 +55,7 @@ func (uc *UseCase) GetAllMaterials(ctx context.Context) ([]*schema.Material, err
 func (uc *UseCase) UpdateMaterial(ctx context.Context, req UpdateMaterialRequest, id uuid.UUID) error {
 	mat, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return ErrMaterialNotFound
+		return ErrMaterialNotFound.Build()
 	}
 
 	// Update the material fields from the request
@@ -72,19 +72,18 @@ func (uc *UseCase) UpdateMaterial(ctx context.Context, req UpdateMaterialRequest
 func (uc *UseCase) AddAttachment(ctx context.Context, id uuid.UUID, req AttachmentInput) error {
 	mat, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return ErrMaterialNotFound
+		return ErrMaterialNotFound.Build()
 	}
 
 	if req.File != nil {
 
-		attachment, err := uc.attachmentUseCase.CreateAttachment(ctx, req.File, req.Description,id)
+		attachment, err := uc.attachmentUseCase.CreateAttachment(ctx, req.File, req.Description, id)
 		if err != nil {
 
-			return ErrS3UploadFail
+			return ErrS3UploadFail.Build()
 		}
 		mat.Attachments = append(mat.Attachments, attachment)
 	}
-
 
 	return uc.repo.Update(ctx, mat)
 }

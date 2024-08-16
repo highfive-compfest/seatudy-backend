@@ -6,5 +6,7 @@ import (
 )
 
 var (
-	ErrUserNotFound = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "USER_NOT_FOUND"}
+	ErrUserNotFound = apierror.NewApiErrorBuilder().
+		WithHttpStatus(http.StatusNotFound).
+		WithMessage("USER_NOT_FOUND")
 )

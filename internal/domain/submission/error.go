@@ -7,16 +7,63 @@ import (
 )
 
 var (
-	ErrAssignmentNotFound      = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "ASSIGNMENT_NOT_FOUND"}
-	ErrInvalidCourseData       = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "INVALID_COURSE_DATA"}
-	ErrNotOwnerCourse          = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "NOT_OWNER_ACCESS"}
-	ErrNotEnrollCourse         = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "NOT_ENROLL_ACCESS"}
-	ErrSubmissionAlreadyExists = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "SUBMISSION_ALREADY_EXISTS_ACCESS"}
-	ErrNotOwnerSubmission      = apierror.ApiError{HttpStatus: http.StatusBadRequest, Message: "NOT_OWNER_ACCESS"}
-	ErrUnauthorizedAccess      = apierror.ApiError{HttpStatus: http.StatusUnauthorized, Message: "UNAUTHORIZED_ACCESS"}
-	ErrForbiddenOperation      = apierror.ApiError{HttpStatus: http.StatusForbidden, Message: "FORBIDDEN_OPERATION"}
-	ErrDatabaseOperationFail   = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "DATABASE_OPERATION_FAILED"}
-	ErrS3UploadFail            = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "S3_UPLOAD_FAILED"}
-	ErrUUIDGenerationFail      = apierror.ApiError{HttpStatus: http.StatusInternalServerError, Message: "UUID_GENERATION_FAILED"}
-	ErrEditConflict            = apierror.ApiError{HttpStatus: http.StatusConflict, Message: "EDIT_CONFLICT"}
+	ErrAssignmentNotFound = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusNotFound).
+				WithMessage("ASSIGNMENT_NOT_FOUND").
+				Build()
+
+	ErrInvalidCourseData = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusBadRequest).
+				WithMessage("INVALID_COURSE_DATA").
+				Build()
+
+	ErrNotOwnerCourse = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusBadRequest).
+				WithMessage("NOT_OWNER_ACCESS").
+				Build()
+
+	ErrNotEnrollCourse = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusBadRequest).
+				WithMessage("NOT_ENROLL_ACCESS").
+				Build()
+
+	ErrSubmissionAlreadyExists = apierror.NewApiErrorBuilder().
+					WithHttpStatus(http.StatusBadRequest).
+					WithMessage("SUBMISSION_ALREADY_EXISTS_ACCESS").
+					Build()
+
+	ErrNotOwnerSubmission = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusBadRequest).
+				WithMessage("NOT_OWNER_ACCESS").
+				Build()
+
+	ErrUnauthorizedAccess = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusUnauthorized).
+				WithMessage("UNAUTHORIZED_ACCESS").
+				Build()
+
+	ErrForbiddenOperation = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusForbidden).
+				WithMessage("FORBIDDEN_OPERATION").
+				Build()
+
+	ErrDatabaseOperationFail = apierror.NewApiErrorBuilder().
+					WithHttpStatus(http.StatusInternalServerError).
+					WithMessage("DATABASE_OPERATION_FAILED").
+					Build()
+
+	ErrS3UploadFail = apierror.NewApiErrorBuilder().
+			WithHttpStatus(http.StatusInternalServerError).
+			WithMessage("S3_UPLOAD_FAILED").
+			Build()
+
+	ErrUUIDGenerationFail = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusInternalServerError).
+				WithMessage("UUID_GENERATION_FAILED").
+				Build()
+
+	ErrEditConflict = apierror.NewApiErrorBuilder().
+			WithHttpStatus(http.StatusConflict).
+			WithMessage("EDIT_CONFLICT").
+			Build()
 )

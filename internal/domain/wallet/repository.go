@@ -137,7 +137,7 @@ func (r *Repository) TransferByUserID(tx *gorm.DB, fromUserID, toUserID uuid.UUI
 
 		// debit sender
 		if fromWallet.Balance < amount {
-			return apierror.ErrInsufficientBalance
+			return apierror.ErrInsufficientBalance.Build()
 		}
 		if err := tx.Model(fromWallet).Update("balance", gorm.Expr("balance - ?", amount)).Error; err != nil {
 			return err

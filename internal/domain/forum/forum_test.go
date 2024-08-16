@@ -201,7 +201,7 @@ func (suite *ForumUseCaseTestSuite) TestCreateDiscussion_InvalidUserID() {
 	err := suite.forumUseCase.CreateDiscussion(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *ForumUseCaseTestSuite) TestGetDiscussionByID_Success() {
@@ -241,7 +241,7 @@ func (suite *ForumUseCaseTestSuite) TestGetDiscussionByID_NotFound() {
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), res)
-	assert.Equal(suite.T(), ErrDiscussionNotFound, err)
+	assert.Equal(suite.T(), ErrDiscussionNotFound.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -288,7 +288,7 @@ func (suite *ForumUseCaseTestSuite) TestUpdateDiscussion_NotFound() {
 	err := suite.forumUseCase.UpdateDiscussion(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrDiscussionNotFound, err)
+	assert.Equal(suite.T(), ErrDiscussionNotFound.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -315,7 +315,7 @@ func (suite *ForumUseCaseTestSuite) TestUpdateDiscussion_NotYourResource() {
 	err := suite.forumUseCase.UpdateDiscussion(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrNotYourResource, err)
+	assert.Equal(suite.T(), apierror.ErrNotYourResource.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -350,7 +350,7 @@ func (suite *ForumUseCaseTestSuite) TestDeleteDiscussion_NotFound() {
 	err := suite.forumUseCase.DeleteDiscussion(ctx, discussionID.String())
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrDiscussionNotFound, err)
+	assert.Equal(suite.T(), ErrDiscussionNotFound.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -371,7 +371,7 @@ func (suite *ForumUseCaseTestSuite) TestDeleteDiscussion_NotYourResource() {
 	err := suite.forumUseCase.DeleteDiscussion(ctx, discussionID.String())
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrNotYourResource, err)
+	assert.Equal(suite.T(), apierror.ErrNotYourResource.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -406,7 +406,7 @@ func (suite *ForumUseCaseTestSuite) TestCreateReply_InvalidUserID() {
 	err := suite.forumUseCase.CreateReply(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *ForumUseCaseTestSuite) TestCreateReply_DiscussionNotFound() {
@@ -425,7 +425,7 @@ func (suite *ForumUseCaseTestSuite) TestCreateReply_DiscussionNotFound() {
 	err := suite.forumUseCase.CreateReply(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrDiscussionNotFound, err)
+	assert.Equal(suite.T(), ErrDiscussionNotFound.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -464,7 +464,7 @@ func (suite *ForumUseCaseTestSuite) TestUpdateReply_NotFound() {
 	err := suite.forumUseCase.UpdateReply(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrReplyNotFound, err)
+	assert.Equal(suite.T(), ErrReplyNotFound.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -486,7 +486,7 @@ func (suite *ForumUseCaseTestSuite) TestUpdateReply_NotYourResource() {
 	err := suite.forumUseCase.UpdateReply(ctx, req)
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrNotYourResource, err)
+	assert.Equal(suite.T(), apierror.ErrNotYourResource.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -516,7 +516,7 @@ func (suite *ForumUseCaseTestSuite) TestDeleteReply_NotFound() {
 	err := suite.forumUseCase.DeleteReply(ctx, replyID.String())
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), ErrReplyNotFound, err)
+	assert.Equal(suite.T(), ErrReplyNotFound.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 
@@ -531,7 +531,7 @@ func (suite *ForumUseCaseTestSuite) TestDeleteReply_NotYourResource() {
 	err := suite.forumUseCase.DeleteReply(ctx, replyID.String())
 
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrNotYourResource, err)
+	assert.Equal(suite.T(), apierror.ErrNotYourResource.Build(), err)
 	suite.forumRepo.AssertExpectations(suite.T())
 }
 

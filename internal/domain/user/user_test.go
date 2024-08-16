@@ -18,8 +18,6 @@ type MockRepository struct {
 	mock.Mock
 }
 
-
-
 func (m *MockRepository) Create(user *schema.User) error {
 	args := m.Called(user)
 	return args.Error(0)
@@ -62,11 +60,10 @@ func (m *MockFileUploader) UploadFile(key string, fileHeader *multipart.FileHead
 	return args.String(0), args.Error(1)
 }
 
-
 type UseCaseTestSuite struct {
 	suite.Suite
-	repo    *MockRepository
-	useCase *UseCase
+	repo     *MockRepository
+	useCase  *UseCase
 	uploader *MockFileUploader
 }
 
@@ -94,7 +91,7 @@ func (suite *UseCaseTestSuite) TestGetMe_InvalidUUID() {
 	result, err := suite.useCase.GetMe(ctx)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestGetMe_InternalServerError() {
@@ -106,7 +103,7 @@ func (suite *UseCaseTestSuite) TestGetMe_InternalServerError() {
 	result, err := suite.useCase.GetMe(ctx)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestGetByID_Success() {
@@ -132,7 +129,7 @@ func (suite *UseCaseTestSuite) TestGetByID_InvalidUUID() {
 	result, err := suite.useCase.GetByID(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
-	assert.Equal(suite.T(), apierror.ErrInvalidParamId, err)
+	assert.Equal(suite.T(), apierror.ErrInvalidParamId.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestGetByID_UserNotFound() {
@@ -144,7 +141,7 @@ func (suite *UseCaseTestSuite) TestGetByID_UserNotFound() {
 	result, err := suite.useCase.GetByID(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
-	assert.Equal(suite.T(), ErrUserNotFound, err)
+	assert.Equal(suite.T(), ErrUserNotFound.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestGetByID_InternalServerError() {
@@ -156,7 +153,7 @@ func (suite *UseCaseTestSuite) TestGetByID_InternalServerError() {
 	result, err := suite.useCase.GetByID(req)
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestUpdate_Success() {
@@ -177,7 +174,7 @@ func (suite *UseCaseTestSuite) TestUpdate_InvalidUUID() {
 
 	err := suite.useCase.Update(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestUpdate_InvalidImageFile() {
@@ -195,7 +192,7 @@ func (suite *UseCaseTestSuite) TestUpdate_InvalidImageFile() {
 
 	err := suite.useCase.Update(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInvalidFileType, err)
+	assert.Equal(suite.T(), apierror.ErrInvalidFileType.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestUpdate_OversizedImageFile() {
@@ -210,15 +207,14 @@ func (suite *UseCaseTestSuite) TestUpdate_OversizedImageFile() {
 	}
 	suite.repo.On("Update", mock.Anything).Return(apierror.ErrFileTooLarge)
 
-	expectedErr := apierror.ErrFileTooLarge
-	apierror.AddPayload(&expectedErr, map[string]string{
+	expectedErr := apierror.ErrFileTooLarge.WithPayload(map[string]string{
 		"max_size":      "2 MB",
 		"received_size": fileutil.ByteToAppropriateUnit(req.ImageFile.Size),
 	})
 
 	err := suite.useCase.Update(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), expectedErr, err)
+	assert.Equal(suite.T(), expectedErr.Build(), err)
 }
 
 func (suite *UseCaseTestSuite) TestUpdate_InternalServerError() {
@@ -231,7 +227,7 @@ func (suite *UseCaseTestSuite) TestUpdate_InternalServerError() {
 
 	err := suite.useCase.Update(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func TestUseCaseTestSuite(t *testing.T) {

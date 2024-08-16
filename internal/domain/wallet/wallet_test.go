@@ -131,11 +131,11 @@ func (suite *WalletUseCaseTestSuite) TestTopUp_RepoError() {
 	req := &TopUpRequest{Amount: 10000}
 	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
-	suite.repo.On("GetByUserID", mock.Anything, userID).Return(nil, apierror.ErrInternalServer)
+	suite.repo.On("GetByUserID", mock.Anything, userID).Return(nil, gorm.ErrInvalidDB)
 
 	_, err := suite.uc.TopUp(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *WalletUseCaseTestSuite) TestTopUp_MidtransError() {
@@ -162,10 +162,10 @@ func (suite *WalletUseCaseTestSuite) TestVerifyPayment_Success() {
 func (suite *WalletUseCaseTestSuite) TestVerifyPayment_RepoError() {
 	transactionID := uuid.New()
 
-	suite.repo.On("TopUpSuccess", transactionID).Return(apierror.ErrInternalServer)
+	suite.repo.On("TopUpSuccess", transactionID).Return(gorm.ErrInvalidDB)
 	err := suite.uc.VerifyPayment(transactionID, schema.MidtransStatusSuccess)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *WalletUseCaseTestSuite) TestGetBalance_Success() {
@@ -184,18 +184,18 @@ func (suite *WalletUseCaseTestSuite) TestGetBalance_InvalidUserID() {
 
 	_, err := suite.uc.GetBalance(ctx)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *WalletUseCaseTestSuite) TestGetBalance_RepoError() {
 	ctx := context.WithValue(context.Background(), "user.id", "123e4567-e89b-12d3-a456-426614174000")
 	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
-	suite.repo.On("GetByUserID", mock.Anything, userID).Return(nil, apierror.ErrInternalServer)
+	suite.repo.On("GetByUserID", mock.Anything, userID).Return(nil, gorm.ErrInvalidDB)
 
 	_, err := suite.uc.GetBalance(ctx)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *WalletUseCaseTestSuite) TestGetMidtransTransactionsByUser_Success() {
@@ -222,7 +222,7 @@ func (suite *WalletUseCaseTestSuite) TestGetMidtransTransactionsByUser_InvalidUs
 
 	_, err := suite.uc.GetMidtransTransactionsByUser(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrTokenInvalid, err)
+	assert.Equal(suite.T(), apierror.ErrTokenInvalid.Build(), err)
 }
 
 func (suite *WalletUseCaseTestSuite) TestGetMidtransTransactionsByUser_RepoError() {
@@ -233,11 +233,12 @@ func (suite *WalletUseCaseTestSuite) TestGetMidtransTransactionsByUser_RepoError
 	wallet := &schema.Wallet{ID: uuid.New(), UserID: userID, Balance: 10000}
 
 	suite.repo.On("GetByUserID", mock.Anything, userID).Return(wallet, nil)
-	suite.repo.On("GetMidtransTransactionsByWalletID", mock.Anything, wallet.ID, true, req.Page, req.Limit).Return(nil, int64(0), apierror.ErrInternalServer)
+	suite.repo.On("GetMidtransTransactionsByWalletID", mock.Anything, wallet.ID, true, req.Page, req.Limit).
+		Return(nil, int64(0), apierror.ErrInternalServer.Build())
 
 	_, err := suite.uc.GetMidtransTransactionsByUser(ctx, req)
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func TestWalletUseCaseTestSuite(t *testing.T) {

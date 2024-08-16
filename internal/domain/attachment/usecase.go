@@ -46,7 +46,7 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Println("Error generating UUID: ", err)
-		return schema.Attachment{}, apierror.ErrInternalServer
+		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
 	log.Println("masuk ini")
@@ -64,7 +64,7 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 		MaterialID:  &materialID,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
-		return schema.Attachment{}, apierror.ErrInternalServer
+		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
 	return att, nil
@@ -75,7 +75,7 @@ func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Println("Error generating UUID: ", err)
-		return schema.Attachment{}, apierror.ErrInternalServer
+		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
 	log.Println("masuk ini")
@@ -93,7 +93,7 @@ func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *
 		AssignmentID: &assignmentID,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
-		return schema.Attachment{}, apierror.ErrInternalServer
+		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
 	return att, nil
@@ -104,7 +104,7 @@ func (auc *UseCase) CreateSubmissionAttachment(ctx context.Context, fileHeader *
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Println("Error generating UUID: ", err)
-		return schema.Attachment{}, apierror.ErrInternalServer
+		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
 	log.Println("masuk ini")
@@ -121,7 +121,7 @@ func (auc *UseCase) CreateSubmissionAttachment(ctx context.Context, fileHeader *
 		Description: description,
 	}
 	if err := auc.repo.Create(ctx, &att); err != nil {
-		return schema.Attachment{}, apierror.ErrInternalServer
+		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
 	return att, nil
@@ -140,7 +140,7 @@ func (uc *UseCase) UpdateAttachment(ctx context.Context, id uuid.UUID, req Attac
 	if req.File != nil {
 		fileURL, err := uc.uploader.UploadFile("attachments/"+id.String()+"."+req.File.Filename, req.File)
 		if err != nil {
-			return nil, ErrS3UploadFail
+			return nil, ErrS3UploadFail.Build()
 		}
 		attachment.URL = fileURL
 	}

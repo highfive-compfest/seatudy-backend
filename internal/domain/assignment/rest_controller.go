@@ -12,7 +12,7 @@ import (
 )
 
 type RestController struct {
-	useCase *UseCase
+	useCase       *UseCase
 	courseUseCase *course.UseCase
 }
 
@@ -21,12 +21,12 @@ func NewRestController(r *gin.Engine, uc *UseCase, cuc *course.UseCase) {
 
 	assignmentGroup := r.Group("/v1/assignments")
 	{
-		assignmentGroup.POST("",middleware.Authenticate(),middleware.RequireRole("instructor"), c.createAssignment)
+		assignmentGroup.POST("", middleware.Authenticate(), middleware.RequireRole("instructor"), c.createAssignment)
 		assignmentGroup.GET("/:id", c.getAssignmentByID)
-		assignmentGroup.PUT("/:id",middleware.Authenticate(),middleware.RequireRole("instructor"), c.updateAssignment)
-		assignmentGroup.POST("/addAttachment/:assignmentId",middleware.Authenticate(),middleware.RequireRole("instructor"), c.addAttachment)
-		assignmentGroup.DELETE("/:id",middleware.Authenticate(),middleware.RequireRole("instructor"), c.deleteAssignment)
-		assignmentGroup.GET("/course/:courseId",middleware.Authenticate(), c.getAssignmentsByCourse)
+		assignmentGroup.PUT("/:id", middleware.Authenticate(), middleware.RequireRole("instructor"), c.updateAssignment)
+		assignmentGroup.POST("/addAttachment/:assignmentId", middleware.Authenticate(), middleware.RequireRole("instructor"), c.addAttachment)
+		assignmentGroup.DELETE("/:id", middleware.Authenticate(), middleware.RequireRole("instructor"), c.deleteAssignment)
+		assignmentGroup.GET("/course/:courseId", middleware.Authenticate(), c.getAssignmentsByCourse)
 	}
 }
 
@@ -38,14 +38,14 @@ func (c *RestController) createAssignment(ctx *gin.Context) {
 	}
 
 	userID, exists := ctx.Get("user.id")
-    if !exists {
-        response.NewRestResponse(http.StatusInternalServerError, "User ID not found in request context", nil).Send(ctx)
-        return
-    }
+	if !exists {
+		response.NewRestResponse(http.StatusInternalServerError, "User ID not found in request context", nil).Send(ctx)
+		return
+	}
 
-	courseID , err := uuid.Parse(req.CourseID)
+	courseID, err := uuid.Parse(req.CourseID)
 	if err != nil {
-		err2 := apierror.ErrInternalServer
+		err2 := apierror.ErrInternalServer.Build()
 		response.NewRestResponse(apierror.GetHttpStatus(err2), err2.Error(), err.Error()).Send(ctx)
 	}
 
@@ -60,8 +60,6 @@ func (c *RestController) createAssignment(ctx *gin.Context) {
 		return
 	}
 
-
-
 	if err := c.useCase.CreateAssignment(ctx, req, courseID); err != nil {
 		response.NewRestResponse(http.StatusInternalServerError, "Failed to create assignment: "+err.Error(), nil).Send(ctx)
 		return
@@ -73,16 +71,16 @@ func (c *RestController) addAttachment(ctx *gin.Context) {
 
 	id, err := uuid.Parse(ctx.Param("assignmentId"))
 	if err != nil {
-		err = apierror.ErrInvalidParamId
+		err = apierror.ErrInvalidParamId.Build()
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), err.Error()).Send(ctx)
 		return
 	}
 
 	err = c.verifyAssignmentOwnership(ctx, id)
-    if err != nil {
-        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
-        return
-    }
+	if err != nil {
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+		return
+	}
 
 	var req AttachmentInput
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -90,9 +88,8 @@ func (c *RestController) addAttachment(ctx *gin.Context) {
 		return
 	}
 
-
 	if err := c.useCase.AddAttachment(ctx, id, req); err != nil {
-		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetDetail(err)).Send(ctx)
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 		return
 	}
 	response.NewRestResponse(http.StatusOK, "Add attachment successfully", nil).Send(ctx)
@@ -121,11 +118,10 @@ func (c *RestController) updateAssignment(ctx *gin.Context) {
 	}
 
 	err = c.verifyAssignmentOwnership(ctx, id)
-    if err != nil {
-        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
-        return
-    }
-
+	if err != nil {
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+		return
+	}
 
 	var req UpdateAssignmentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -148,11 +144,10 @@ func (c *RestController) deleteAssignment(ctx *gin.Context) {
 	}
 
 	err = c.verifyAssignmentOwnership(ctx, id)
-    if err != nil {
-        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
-        return
-    }
-
+	if err != nil {
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+		return
+	}
 
 	if err := c.useCase.DeleteAssignment(ctx, id); err != nil {
 		response.NewRestResponse(http.StatusInternalServerError, "Failed to delete assignment: "+err.Error(), nil).Send(ctx)
@@ -168,38 +163,38 @@ func (c *RestController) getAssignmentsByCourse(ctx *gin.Context) {
 		return
 	}
 
-	_ ,  err = c.courseUseCase.GetByID(ctx,courseId)
+	_, err = c.courseUseCase.GetByID(ctx, courseId)
 	if err != nil {
-        response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
-        return
-    }
+		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
+		return
+	}
 
 	assignments, err := c.useCase.GetAssignmentsByCourse(ctx, courseId)
 	if err != nil {
 		response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), nil).Send(ctx)
-        return
+		return
 	}
 	response.NewRestResponse(http.StatusOK, "Assignments retrieved successfully", assignments).Send(ctx)
 }
 
 func (c *RestController) verifyAssignmentOwnership(ctx *gin.Context, assignmentId uuid.UUID) error {
-    
-    ass, err := c.useCase.GetAssignmentByID(ctx,assignmentId)
-    if err != nil {
-        return  err 
-    }
 
-	courseData, err := c.courseUseCase.GetByID(ctx,ass.CourseID)
+	ass, err := c.useCase.GetAssignmentByID(ctx, assignmentId)
 	if err != nil {
-        return  err 
-    }
+		return err
+	}
+
+	courseData, err := c.courseUseCase.GetByID(ctx, ass.CourseID)
+	if err != nil {
+		return err
+	}
 	instructorID, exists := ctx.Get("user.id")
 	if !exists {
-		return ErrUnauthorizedAccess
+		return ErrUnauthorizedAccess.Build()
 	}
-    if courseData.InstructorID.String() != instructorID {
-        return  ErrNotOwnerAccess 
-    }
+	if courseData.InstructorID.String() != instructorID {
+		return ErrNotOwnerAccess.Build()
+	}
 
-    return nil
+	return nil
 }

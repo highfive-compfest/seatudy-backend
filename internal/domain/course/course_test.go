@@ -65,17 +65,17 @@ func (m *MockCourseRepository) FindByPopularity(ctx context.Context, page, pageS
 }
 
 func (m *MockCourseRepository) GetUserCourseProgress(ctx context.Context, courseID, userID uuid.UUID) (float64, error) {
-	args := m.Called(ctx,courseID,userID)
-	return args.Get(0).(float64),args.Error(1)
+	args := m.Called(ctx, courseID, userID)
+	return args.Get(0).(float64), args.Error(1)
 }
 
-func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error){
+func (m *MockCourseRepository) SearchByTitle(ctx context.Context, title string, page, pageSize int) ([]schema.Course, int, error) {
 	args := m.Called(ctx, title, page, pageSize)
 	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
 }
 
-func (m *MockCourseRepository) DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error){
-	args := m.Called(ctx, filterType,filterValue,sort, page, limit)
+func (m *MockCourseRepository) DynamicFilterCourses(ctx context.Context, filterType, filterValue, sort string, page, limit int) ([]schema.Course, int, error) {
+	args := m.Called(ctx, filterType, filterValue, sort, page, limit)
 	return args.Get(0).([]schema.Course), args.Int(1), args.Error(2)
 }
 
@@ -236,52 +236,48 @@ func (m *MockFileUploader) UploadFile(key string, fileHeader *multipart.FileHead
 	return args.String(0), args.Error(1)
 }
 
-
 type CourseUseCaseTestSuite struct {
 	suite.Suite
-	walletRepo    *MockWalletRepository
-	courseRepo    *MockCourseRepository
-	enrollRepo    *MockEnrollRepository
-	userRepo *MockUserRepository
-	mailer *MockMailer
-	enrollUseCase *courseenroll.UseCase
+	walletRepo       *MockWalletRepository
+	courseRepo       *MockCourseRepository
+	enrollRepo       *MockEnrollRepository
+	userRepo         *MockUserRepository
+	mailer           *MockMailer
+	enrollUseCase    *courseenroll.UseCase
 	notificationRepo *MockNotificationRepository
-	courseUseCase *UseCase
-    uploader *MockFileUploader
+	courseUseCase    *UseCase
+	uploader         *MockFileUploader
 }
 
 func (suite *CourseUseCaseTestSuite) SetupTest() {
 	suite.courseRepo = new(MockCourseRepository)
 	suite.enrollRepo = new(MockEnrollRepository)
 	suite.walletRepo = new(MockWalletRepository)
-	suite.userRepo =  new(MockUserRepository)
-    suite.uploader = new(MockFileUploader)
+	suite.userRepo = new(MockUserRepository)
+	suite.uploader = new(MockFileUploader)
 	suite.mailer = new(MockMailer)
 	suite.notificationRepo = new(MockNotificationRepository)
 	suite.enrollUseCase = courseenroll.NewUseCase(suite.enrollRepo)
-	suite.courseUseCase = NewUseCase(suite.courseRepo,suite.walletRepo,*suite.enrollUseCase, suite.userRepo,suite.notificationRepo,suite.mailer, suite.uploader)
+	suite.courseUseCase = NewUseCase(suite.courseRepo, suite.walletRepo, *suite.enrollUseCase, suite.userRepo, suite.notificationRepo, suite.mailer, suite.uploader)
 
 }
 
 func (suite *CourseUseCaseTestSuite) TestCreateCourse_Success() {
-    // Mock input
-    ctx := context.Background()
-    req := CreateCourseRequest{
-        Title:       "Introduction to Go",
-        Description: "Learn the basics of Go.",
-        Price:       10000,
-        Difficulty:  "beginner",
-        Category:    "Programming Languages",
-    }
+	// Mock input
+	ctx := context.Background()
+	req := CreateCourseRequest{
+		Title:       "Introduction to Go",
+		Description: "Learn the basics of Go.",
+		Price:       10000,
+		Difficulty:  "beginner",
+		Category:    "Programming Languages",
+	}
 
-    instructorID,_ := uuid.NewV7()
+	instructorID, _ := uuid.NewV7()
 
-	
-    suite.courseRepo.On("Create", ctx, mock.Anything).Return(nil)
+	suite.courseRepo.On("Create", ctx, mock.Anything).Return(nil)
 
-
-    err := suite.courseUseCase.Create(ctx, req, nil, nil, instructorID.String())
-
+	err := suite.courseUseCase.Create(ctx, req, nil, nil, instructorID.String())
 
 	assert.NoError(suite.T(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
@@ -289,538 +285,533 @@ func (suite *CourseUseCaseTestSuite) TestCreateCourse_Success() {
 }
 
 func (suite *CourseUseCaseTestSuite) TestCreateCourse_InvalidImageFileType() {
-    // Mock input
-    ctx := context.Background()
-    req := CreateCourseRequest{
-        Title:       "Introduction to Go",
-        Description: "Learn the basics of Go.",
-        Price:       10000,
-        Difficulty:  "beginner",
-        Category:    "Programming Languages",
-    }
-    imageFile := &multipart.FileHeader{Filename: "image.pdf", Size: 1 * fileutil.MegaByte} // Unsupported file type for this test
-    instructorID, _ := uuid.NewV7()
+	// Mock input
+	ctx := context.Background()
+	req := CreateCourseRequest{
+		Title:       "Introduction to Go",
+		Description: "Learn the basics of Go.",
+		Price:       10000,
+		Difficulty:  "beginner",
+		Category:    "Programming Languages",
+	}
+	imageFile := &multipart.FileHeader{Filename: "image.pdf", Size: 1 * fileutil.MegaByte} // Unsupported file type for this test
+	instructorID, _ := uuid.NewV7()
 
-    // This should return an error due to invalid image file type
-	
-    err := suite.courseUseCase.Create(ctx, req, imageFile, nil, instructorID.String())
+	// This should return an error due to invalid image file type
 
-	
+	err := suite.courseUseCase.Create(ctx, req, imageFile, nil, instructorID.String())
+
 	assert.Error(suite.T(), err)
-	assert.Equal(suite.T(),  apierror.ErrInternalServer, err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestCreateCourse_InvalidSyllabusFileType() {
-    // Mock input
-    ctx := context.Background()
-    req := CreateCourseRequest{
-        Title:       "Advanced Node.js",
-        Description: "Deep dive into Node.js.",
-        Price:       12000,
-        Difficulty:  "advanced",
-        Category:    "Programming Languages",
-    }
+	// Mock input
+	ctx := context.Background()
+	req := CreateCourseRequest{
+		Title:       "Advanced Node.js",
+		Description: "Deep dive into Node.js.",
+		Price:       12000,
+		Difficulty:  "advanced",
+		Category:    "Programming Languages",
+	}
 
-    syllabusFile := &multipart.FileHeader{Filename: "syllabus.jpg", Size: 1 * fileutil.MegaByte} // Unsupported file type
-    instructorID, _ := uuid.NewV7()
+	syllabusFile := &multipart.FileHeader{Filename: "syllabus.jpg", Size: 1 * fileutil.MegaByte} // Unsupported file type
+	instructorID, _ := uuid.NewV7()
 
+	err := suite.courseUseCase.Create(ctx, req, nil, syllabusFile, instructorID.String())
 
-    err := suite.courseUseCase.Create(ctx, req, nil, syllabusFile, instructorID.String())
-
-    assert.Error(suite.T(), err)
-	assert.Equal(suite.T(),  apierror.ErrInternalServer, err)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestCreateCourse_InvalidInstructorID() {
-    // Mock input
-    ctx := context.Background()
-    req := CreateCourseRequest{
-        Title:       "Python for Data Science",
-        Description: "Explore Python in Data Science.",
-        Price:       15000,
-        Difficulty:  "intermediate",
-        Category:    "Data Science & Analytics",
-    }
+	// Mock input
+	ctx := context.Background()
+	req := CreateCourseRequest{
+		Title:       "Python for Data Science",
+		Description: "Explore Python in Data Science.",
+		Price:       15000,
+		Difficulty:  "intermediate",
+		Category:    "Data Science & Analytics",
+	}
 
-    invalidId := "invalid"
+	invalidId := "invalid"
 
-    // This should return an error due to invalid instructor ID
-    err := suite.courseUseCase.Create(ctx, req, nil,nil, invalidId)
+	// This should return an error due to invalid instructor ID
+	err := suite.courseUseCase.Create(ctx, req, nil, nil, invalidId)
 
-
-    assert.Error(suite.T(), err)
-	assert.Equal(suite.T(),  ErrUnauthorizedAccess , err)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), ErrUnauthorizedAccess.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestCreateCourse_FileTooLarge() {
-    // Mock input
-    ctx := context.Background()
-    req := CreateCourseRequest{
-        Title:       "Python for Data Science",
-        Description: "Explore Python in Data Science.",
-        Price:       15000,
-        Difficulty:  "intermediate",
-        Category:    "Data Science & Analytics",
-    }
-    imageFile := &multipart.FileHeader{Filename: "image.jpg", Size: 3 * fileutil.MegaByte}
-    syllabusFile := &multipart.FileHeader{Filename: "syllabus.pdf", Size: 1 * fileutil.MegaByte}
-    instructorID, _ := uuid.NewV7() 
+	// Mock input
+	ctx := context.Background()
+	req := CreateCourseRequest{
+		Title:       "Python for Data Science",
+		Description: "Explore Python in Data Science.",
+		Price:       15000,
+		Difficulty:  "intermediate",
+		Category:    "Data Science & Analytics",
+	}
+	imageFile := &multipart.FileHeader{Filename: "image.jpg", Size: 3 * fileutil.MegaByte}
+	syllabusFile := &multipart.FileHeader{Filename: "syllabus.pdf", Size: 1 * fileutil.MegaByte}
+	instructorID, _ := uuid.NewV7()
 
-    // This should return an error due to invalid instructor ID
-    err := suite.courseUseCase.Create(ctx, req, imageFile, syllabusFile, instructorID.String())
+	// This should return an error due to invalid instructor ID
+	err := suite.courseUseCase.Create(ctx, req, imageFile, syllabusFile, instructorID.String())
 
-	err2 := apierror.ErrFileTooLarge
-	apierror.AddPayload(&err2, map[string]string{
+	err2 := apierror.ErrFileTooLarge.WithPayload(map[string]string{
 		"max_size":      "2 MB",
 		"received_size": fileutil.ByteToAppropriateUnit(imageFile.Size),
 	})
-    assert.Error(suite.T(), err)
-	assert.Equal(suite.T(),  err2, err)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), err2.Build(), err)
 	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetAll_Success() {
-    ctx := context.Background()
-    page, pageSize := 1, 10
+	ctx := context.Background()
+	page, pageSize := 1, 10
 	courseID, _ := uuid.NewV7()
 	courseID1, _ := uuid.NewV7()
-    mockCourses := []schema.Course{{ID: courseID, Title: "Go Programming"}, {ID: courseID1, Title: "Python Programming"}}
-    mockTotal := 2
+	mockCourses := []schema.Course{{ID: courseID, Title: "Go Programming"}, {ID: courseID1, Title: "Python Programming"}}
+	mockTotal := 2
 
-    suite.courseRepo.On("GetAll", ctx, page, pageSize).Return(mockCourses, mockTotal, nil)
+	suite.courseRepo.On("GetAll", ctx, page, pageSize).Return(mockCourses, mockTotal, nil)
 
-    response, err := suite.courseUseCase.GetAll(ctx, page, pageSize)
+	response, err := suite.courseUseCase.GetAll(ctx, page, pageSize)
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), response.Courses, 2)
-    assert.Equal(suite.T(), mockTotal, response.Pagination.TotalData)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), response.Courses, 2)
+	assert.Equal(suite.T(), mockTotal, response.Pagination.TotalData)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetCourseByPopularity_Success() {
-    ctx := context.Background()
-    page, pageSize := 1, 10
+	ctx := context.Background()
+	page, pageSize := 1, 10
 	courseID, _ := uuid.NewV7()
 	courseID1, _ := uuid.NewV7()
-    mockCourses := []schema.Course{{ID: courseID, Title: "Node.js Best Practices"}, {ID: courseID1, Title: "Advanced React"}}
-    mockTotal := 2
+	mockCourses := []schema.Course{{ID: courseID, Title: "Node.js Best Practices"}, {ID: courseID1, Title: "Advanced React"}}
+	mockTotal := 2
 
-    suite.courseRepo.On("FindByPopularity", ctx, page, pageSize).Return(mockCourses, mockTotal, nil)
+	suite.courseRepo.On("FindByPopularity", ctx, page, pageSize).Return(mockCourses, mockTotal, nil)
 
-    response, err := suite.courseUseCase.GetCourseByPopularity(ctx, page, pageSize)
+	response, err := suite.courseUseCase.GetCourseByPopularity(ctx, page, pageSize)
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), response.Courses, 2)
-    assert.Equal(suite.T(), mockTotal, response.Pagination.TotalData)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), response.Courses, 2)
+	assert.Equal(suite.T(), mockTotal, response.Pagination.TotalData)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetByInstructorID_Success() {
-    ctx := context.Background()
-    page, pageSize := 1, 10
-    instructorID,_ := uuid.NewV7()
+	ctx := context.Background()
+	page, pageSize := 1, 10
+	instructorID, _ := uuid.NewV7()
 	courseID, _ := uuid.NewV7()
-    mockCourses := []schema.Course{{ID: courseID, Title: "Intro to Docker"}}
-    mockTotal := 1
+	mockCourses := []schema.Course{{ID: courseID, Title: "Intro to Docker"}}
+	mockTotal := 1
 
-    suite.courseRepo.On("FindByInstructorID", ctx, instructorID, page, pageSize).Return(mockCourses, mockTotal, nil)
+	suite.courseRepo.On("FindByInstructorID", ctx, instructorID, page, pageSize).Return(mockCourses, mockTotal, nil)
 
-    response, err := suite.courseUseCase.GetByInstructorID(ctx, instructorID, page, pageSize)
+	response, err := suite.courseUseCase.GetByInstructorID(ctx, instructorID, page, pageSize)
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), response.Courses, 1)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), response.Courses, 1)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetByID_Success() {
-    ctx := context.Background()
-    courseID := uuid.New()
-    mockCourse := schema.Course{ID: courseID, Title: "Microservices with Go"}
+	ctx := context.Background()
+	courseID := uuid.New()
+	mockCourse := schema.Course{ID: courseID, Title: "Microservices with Go"}
 
-    suite.courseRepo.On("GetByID", ctx, courseID).Return(mockCourse, nil)
+	suite.courseRepo.On("GetByID", ctx, courseID).Return(mockCourse, nil)
 
-    course, err := suite.courseUseCase.GetByID(ctx, courseID)
+	course, err := suite.courseUseCase.GetByID(ctx, courseID)
 
-    assert.NoError(suite.T(), err)
-    assert.Equal(suite.T(), mockCourse.Title, course.Title)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), mockCourse.Title, course.Title)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestUpdate_Success() {
-    ctx := context.Background()
-    id := uuid.New()
-    mockCourse := schema.Course{ID: id, Title: "Original Title"}
-    req := UpdateCourseRequest{Title: new(string)}
-    *req.Title = "Updated Title"
+	ctx := context.Background()
+	id := uuid.New()
+	mockCourse := schema.Course{ID: id, Title: "Original Title"}
+	req := UpdateCourseRequest{Title: new(string)}
+	*req.Title = "Updated Title"
 
-    suite.courseRepo.On("GetByID", ctx, id).Return(mockCourse, nil)
-    suite.courseRepo.On("Update", ctx, mock.Anything).Return(nil)
+	suite.courseRepo.On("GetByID", ctx, id).Return(mockCourse, nil)
+	suite.courseRepo.On("Update", ctx, mock.Anything).Return(nil)
 
-    updatedCourse, err := suite.courseUseCase.Update(ctx, req, id, nil, nil)
+	updatedCourse, err := suite.courseUseCase.Update(ctx, req, id, nil, nil)
 
-    assert.NoError(suite.T(), err)
-    assert.Equal(suite.T(), "Updated Title", updatedCourse.Title)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "Updated Title", updatedCourse.Title)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestUpdate_InvalidFileType() {
-    ctx := context.Background()
-    id := uuid.New()
-    mockCourse := schema.Course{ID: id, Title: "Original Title"}
-    req := UpdateCourseRequest{}
-    imageFile := &multipart.FileHeader{Filename: "image.exe", Size: 1 * fileutil.MegaByte}
+	ctx := context.Background()
+	id := uuid.New()
+	mockCourse := schema.Course{ID: id, Title: "Original Title"}
+	req := UpdateCourseRequest{}
+	imageFile := &multipart.FileHeader{Filename: "image.exe", Size: 1 * fileutil.MegaByte}
 
-    suite.courseRepo.On("GetByID", ctx, id).Return(mockCourse, nil)
-    suite.courseRepo.On("Update", ctx, mock.Anything).Return(nil) // This should not be called
+	suite.courseRepo.On("GetByID", ctx, id).Return(mockCourse, nil)
+	suite.courseRepo.On("Update", ctx, mock.Anything).Return(nil) // This should not be called
 
-    _, err := suite.courseUseCase.Update(ctx, req, id, imageFile, nil)
+	_, err := suite.courseUseCase.Update(ctx, req, id, imageFile, nil)
 
-    assert.Error(suite.T(), err)
-    assert.IsType(suite.T(), apierror.ErrInternalServer, err)
+	assert.Error(suite.T(), err)
+	assert.IsType(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *CourseUseCaseTestSuite) TestUpdate_InvalidCourseID() {
-    ctx := context.Background()
-    id,_ := uuid.NewV7() // Suppose this ID does not exist in the database
-    req := UpdateCourseRequest{}
+	ctx := context.Background()
+	id, _ := uuid.NewV7() // Suppose this ID does not exist in the database
+	req := UpdateCourseRequest{}
 
-    suite.courseRepo.On("GetByID", ctx, id).Return(schema.Course{}, ErrCourseNotFound)
+	suite.courseRepo.On("GetByID", ctx, id).Return(schema.Course{}, ErrCourseNotFound.Build())
 
-    _, err := suite.courseUseCase.Update(ctx, req, id, nil, nil)
+	_, err := suite.courseUseCase.Update(ctx, req, id, nil, nil)
 
-    assert.Error(suite.T(), err)
-    assert.IsType(suite.T(), ErrCourseNotFound, err)
+	assert.Error(suite.T(), err)
+	assert.IsType(suite.T(), ErrCourseNotFound.Build(), err)
 }
 
 func (suite *CourseUseCaseTestSuite) TestSearchCoursesByTitle_Success() {
-    ctx := context.Background()
-    title := "Go Programming"
-    page, pageSize := 1, 10
-    mockCourses := []schema.Course{
-        {Title: "Go Programming 101", ID: uuid.New()},
-        {Title: "Advanced Go Programming", ID: uuid.New()},
-    }
-    total := len(mockCourses)
+	ctx := context.Background()
+	title := "Go Programming"
+	page, pageSize := 1, 10
+	mockCourses := []schema.Course{
+		{Title: "Go Programming 101", ID: uuid.New()},
+		{Title: "Advanced Go Programming", ID: uuid.New()},
+	}
+	total := len(mockCourses)
 
-    suite.courseRepo.On("SearchByTitle", ctx, title, page, pageSize).Return(mockCourses, total, nil)
+	suite.courseRepo.On("SearchByTitle", ctx, title, page, pageSize).Return(mockCourses, total, nil)
 
-    response, err := suite.courseUseCase.SearchCoursesByTitle(ctx, title, page, pageSize)
+	response, err := suite.courseUseCase.SearchCoursesByTitle(ctx, title, page, pageSize)
 
-    assert.NoError(suite.T(), err)
-    assert.Equal(suite.T(), total, response.Pagination.TotalData)
-    assert.Len(suite.T(), response.Courses, total)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), total, response.Pagination.TotalData)
+	assert.Len(suite.T(), response.Courses, total)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestBuyCourse_Success() {
-    ctx := context.Background()
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, "user.name", "John Doe")
-    ctx = context.WithValue(ctx, "user.email", "john.doe@example.com")
-    _ = os.Setenv("ENV", "test")
+	ctx = context.WithValue(ctx, "user.email", "john.doe@example.com")
+	_ = os.Setenv("ENV", "test")
 	_ = os.Setenv("SMTP_EMAIL", "test")
 	config.LoadEnv()
-    courseId, _ := uuid.NewV7()
-    studentId, _ := uuid.NewV7()
-    instructorId, _ := uuid.NewV7()
+	courseId, _ := uuid.NewV7()
+	studentId, _ := uuid.NewV7()
+	instructorId, _ := uuid.NewV7()
 
-    mockCourse := schema.Course{ID: courseId, InstructorID: instructorId, Price: 10000}
+	mockCourse := schema.Course{ID: courseId, InstructorID: instructorId, Price: 10000}
 	mockInstructor := schema.User{ID: instructorId, Name: "Instructor Name", Email: "instructor@example.com"}
 
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
 	suite.userRepo.On("GetByID", instructorId).Return(&mockInstructor, nil)
 
-    suite.enrollRepo.On("IsEnrolled", ctx, studentId, courseId).Return(false, nil)
-    suite.mailer.On("DialAndSend", mock.Anything).Return(nil)
- 
-    suite.walletRepo.On("TransferByUserID", mock.AnythingOfType("*gorm.DB"), studentId, instructorId, int64(10000)).Return(nil)
+	suite.enrollRepo.On("IsEnrolled", ctx, studentId, courseId).Return(false, nil)
+	suite.mailer.On("DialAndSend", mock.Anything).Return(nil)
 
+	suite.walletRepo.On("TransferByUserID", mock.AnythingOfType("*gorm.DB"), studentId, instructorId, int64(10000)).Return(nil)
 
-    suite.enrollRepo.On("Create", ctx, mock.AnythingOfType("*schema.CourseEnroll")).Return(nil)
+	suite.enrollRepo.On("Create", ctx, mock.AnythingOfType("*schema.CourseEnroll")).Return(nil)
 	suite.notificationRepo.On("Create", mock.AnythingOfType("*schema.Notification")).Return(nil)
 
-    // Executing the method under test
-    err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
+	// Executing the method under test
+	err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
 
-    // Assertions to check that no error occurred and all expectations were met
-    assert.NoError(suite.T(), err)
-    suite.courseRepo.AssertExpectations(suite.T())
-    suite.enrollRepo.AssertExpectations(suite.T())
-    suite.walletRepo.AssertExpectations(suite.T())
+	// Assertions to check that no error occurred and all expectations were met
+	assert.NoError(suite.T(), err)
+	suite.courseRepo.AssertExpectations(suite.T())
+	suite.enrollRepo.AssertExpectations(suite.T())
+	suite.walletRepo.AssertExpectations(suite.T())
 
 }
 
-
 func (suite *CourseUseCaseTestSuite) TestBuyCourse_CourseNotFound() {
-    ctx := context.Background()
-    courseId,_ := uuid.NewV7()
-    studentId,_ := uuid.NewV7()
+	ctx := context.Background()
+	courseId, _ := uuid.NewV7()
+	studentId, _ := uuid.NewV7()
 
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(schema.Course{}, gorm.ErrRecordNotFound)
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(schema.Course{}, gorm.ErrRecordNotFound)
 
-    err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
+	err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
 
-    assert.Error(suite.T(), err)
-    assert.Equal(suite.T(), ErrCourseNotFound, err)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), ErrCourseNotFound.Build(), err)
 }
 
 func (suite *CourseUseCaseTestSuite) TestBuyCourse_AlreadyEnrolled() {
-    ctx := context.Background()
-    courseId,_ := uuid.NewV7()
-    studentId,_ := uuid.NewV7()
+	ctx := context.Background()
+	courseId, _ := uuid.NewV7()
+	studentId, _ := uuid.NewV7()
 
-    mockCourse := schema.Course{ID: courseId}
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
-    suite.enrollRepo.On("IsEnrolled", ctx, studentId, courseId).Return(true, nil)
+	mockCourse := schema.Course{ID: courseId}
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
+	suite.enrollRepo.On("IsEnrolled", ctx, studentId, courseId).Return(true, nil)
 
-    err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
+	err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
 
-    assert.Error(suite.T(), err)
-    assert.Equal(suite.T(), ErrAlreadyEnrolled, err)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), ErrAlreadyEnrolled.Build(), err)
 }
 
 func (suite *CourseUseCaseTestSuite) TestBuyCourse_TransactionError() {
-    ctx := context.Background()
-    courseId,_ := uuid.NewV7()
-    studentId,_ := uuid.NewV7()
-    instructorId := uuid.New()
+	ctx := context.Background()
+	courseId, _ := uuid.NewV7()
+	studentId, _ := uuid.NewV7()
+	instructorId := uuid.New()
 
-    mockCourse := schema.Course{ID: courseId, InstructorID: instructorId, Price: 10000}
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
-    suite.enrollRepo.On("IsEnrolled", ctx, studentId, courseId).Return(false, nil)
-    suite.walletRepo.On("TransferByUserID", mock.Anything, studentId, instructorId, int64(10000)).Return(apierror.ErrInternalServer)
+	mockCourse := schema.Course{ID: courseId, InstructorID: instructorId, Price: 10000}
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
+	suite.enrollRepo.On("IsEnrolled", ctx, studentId, courseId).Return(false, nil)
+	suite.walletRepo.On("TransferByUserID", mock.Anything, studentId, instructorId, int64(10000)).Return(apierror.ErrInternalServer.Build())
 
-    err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
+	err := suite.courseUseCase.BuyCourse(ctx, courseId, studentId.String())
 
-    assert.Error(suite.T(), err)
-    assert.Equal(suite.T(), apierror.ErrInternalServer, err)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetEnrollmentsByCourse_Success() {
-    ctx := context.Background()
-    courseId := uuid.New()
+	ctx := context.Background()
+	courseId := uuid.New()
 
-    // Mocking enrolled users
-    mockUsers := []schema.User{
-        {ID: uuid.New(), Name: "John Doe"},
-        {ID: uuid.New(), Name: "Jane Doe"},
-    }
+	// Mocking enrolled users
+	mockUsers := []schema.User{
+		{ID: uuid.New(), Name: "John Doe"},
+		{ID: uuid.New(), Name: "Jane Doe"},
+	}
 
-    suite.enrollRepo.On("GetUsersByCourseID", ctx, courseId).Return(mockUsers, nil)
+	suite.enrollRepo.On("GetUsersByCourseID", ctx, courseId).Return(mockUsers, nil)
 
-    users, err := suite.courseUseCase.GetEnrollmentsByCourse(ctx, courseId)
+	users, err := suite.courseUseCase.GetEnrollmentsByCourse(ctx, courseId)
 
-    assert.NoError(suite.T(), err)
-    assert.Equal(suite.T(), mockUsers, users)
-    suite.enrollRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), mockUsers, users)
+	suite.enrollRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetEnrollmentsByCourse_Failure() {
-    ctx := context.Background()
-    courseId := uuid.New()
+	ctx := context.Background()
+	courseId := uuid.New()
 
-    suite.enrollRepo.On("GetUsersByCourseID", ctx, courseId).Return([]schema.User{}, apierror.ErrInternalServer)
+	suite.enrollRepo.On("GetUsersByCourseID", ctx, courseId).Return([]schema.User{},
+		apierror.ErrInternalServer.Build())
 
-    users, err := suite.courseUseCase.GetEnrollmentsByCourse(ctx, courseId)
+	users, err := suite.courseUseCase.GetEnrollmentsByCourse(ctx, courseId)
 
-    assert.Error(suite.T(), err)
-    assert.Nil(suite.T(), users)
-    suite.enrollRepo.AssertExpectations(suite.T())
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), users)
+	suite.enrollRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetEnrollmentsByUser_Success() {
-    ctx := context.Background()
-    studentId,_ := uuid.NewV7()
+	ctx := context.Background()
+	studentId, _ := uuid.NewV7()
 
+	// Mocking enrolled courses and user progress
+	mockCourses := []schema.Course{
+		{ID: uuid.New(), Title: "Course 1"},
+		{ID: uuid.New(), Title: "Course 2"},
+	}
+	mockProgress := []float64{75.0, 90.0}
 
-
-    // Mocking enrolled courses and user progress
-    mockCourses := []schema.Course{
-        {ID: uuid.New(), Title: "Course 1"},
-        {ID: uuid.New(), Title: "Course 2"},
-    }
-    mockProgress := []float64{75.0, 90.0}
-
-    suite.enrollRepo.On("GetCoursesByUserID", ctx, studentId).Return(mockCourses, nil)
-    for i, course := range mockCourses {
+	suite.enrollRepo.On("GetCoursesByUserID", ctx, studentId).Return(mockCourses, nil)
+	for i, course := range mockCourses {
 		suite.courseRepo.On("GetByID", ctx, course.ID).Return(course, nil)
-        suite.courseRepo.On("GetUserCourseProgress", ctx, course.ID, studentId).Return(mockProgress[i], nil)
-    }
+		suite.courseRepo.On("GetUserCourseProgress", ctx, course.ID, studentId).Return(mockProgress[i], nil)
+	}
 
-    courses, err := suite.courseUseCase.GetEnrollmentsByUser(ctx, studentId.String())
+	courses, err := suite.courseUseCase.GetEnrollmentsByUser(ctx, studentId.String())
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), courses, len(mockCourses))
-    for i, resp := range courses {
-        assert.Equal(suite.T(), mockCourses[i].Title, resp.Course.Title)
-        assert.Equal(suite.T(), mockProgress[i], resp.Progress)
-    }
-    suite.enrollRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), courses, len(mockCourses))
+	for i, resp := range courses {
+		assert.Equal(suite.T(), mockCourses[i].Title, resp.Course.Title)
+		assert.Equal(suite.T(), mockProgress[i], resp.Progress)
+	}
+	suite.enrollRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetEnrollmentsByUser_Failure() {
-    ctx := context.Background()
-    studentId, _ := uuid.NewV7()
+	ctx := context.Background()
+	studentId, _ := uuid.NewV7()
 
-    // Return an empty slice and an error
-    suite.enrollRepo.On("GetCoursesByUserID", ctx, studentId).Return([]schema.Course{}, apierror.ErrInternalServer)
+	// Return an empty slice and an error
+	suite.enrollRepo.On("GetCoursesByUserID", ctx, studentId).Return([]schema.Course{},
+		apierror.ErrInternalServer.Build())
 
-    courses, err := suite.courseUseCase.GetEnrollmentsByUser(ctx, studentId.String())
+	courses, err := suite.courseUseCase.GetEnrollmentsByUser(ctx, studentId.String())
 
-    assert.Error(suite.T(), err)
-    assert.Nil(suite.T(), courses) // This may need to be adjusted based on actual method implementation
-    suite.enrollRepo.AssertExpectations(suite.T())
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), courses) // This may need to be adjusted based on actual method implementation
+	suite.enrollRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetUserCourseProgress_Success() {
-    ctx := context.Background()
-    courseId := uuid.New()
-    userId := uuid.New().String()
-    expectedProgress := 85.0
+	ctx := context.Background()
+	courseId := uuid.New()
+	userId := uuid.New().String()
+	expectedProgress := 85.0
 
-    mockCourse := schema.Course{ID: courseId}
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
-    suite.courseRepo.On("GetUserCourseProgress", ctx, courseId, mock.Anything).Return(expectedProgress, nil)
+	mockCourse := schema.Course{ID: courseId}
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
+	suite.courseRepo.On("GetUserCourseProgress", ctx, courseId, mock.Anything).Return(expectedProgress, nil)
 
-    progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, userId)
+	progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, userId)
 
-    assert.NoError(suite.T(), err)
-    assert.Equal(suite.T(), expectedProgress, progress)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), expectedProgress, progress)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetUserCourseProgress_CourseNotFound() {
-    ctx := context.Background()
-    courseId := uuid.New()
-    userId := uuid.New().String()
+	ctx := context.Background()
+	courseId := uuid.New()
+	userId := uuid.New().String()
 
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(schema.Course{}, ErrCourseNotFound)
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(schema.Course{}, ErrCourseNotFound.Build())
 
-    progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, userId)
+	progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, userId)
 
-    assert.Error(suite.T(), err)
-    assert.Equal(suite.T(), ErrCourseNotFound, err)
-    assert.Equal(suite.T(), 0.0, progress)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), ErrCourseNotFound.Build(), err)
+	assert.Equal(suite.T(), 0.0, progress)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetUserCourseProgress_InvalidUserID() {
-    ctx := context.Background()
-    courseId := uuid.New()
-    invalidUserId := "invalid-uuid"
+	ctx := context.Background()
+	courseId := uuid.New()
+	invalidUserId := "invalid-uuid"
 
-    mockCourse := schema.Course{ID: courseId}
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
+	mockCourse := schema.Course{ID: courseId}
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
 
-    progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, invalidUserId)
+	progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, invalidUserId)
 
-    assert.Error(suite.T(), err)
-    assert.Equal(suite.T(), apierror.ErrInternalServer, err)
-    assert.Equal(suite.T(), 0.0, progress)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
+	assert.Equal(suite.T(), 0.0, progress)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestGetUserCourseProgress_FetchProgressError() {
-    ctx := context.Background()
-    courseId := uuid.New()
-    userId := uuid.New().String()
+	ctx := context.Background()
+	courseId := uuid.New()
+	userId := uuid.New().String()
 
-    mockCourse := schema.Course{ID: courseId}
-    suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
-    suite.courseRepo.On("GetUserCourseProgress", ctx, courseId, mock.Anything).Return(0.0, apierror.ErrInternalServer)
+	mockCourse := schema.Course{ID: courseId}
+	suite.courseRepo.On("GetByID", ctx, courseId).Return(mockCourse, nil)
+	suite.courseRepo.On("GetUserCourseProgress", ctx, courseId, mock.Anything).Return(0.0,
+		apierror.ErrInternalServer.Build())
 
-    progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, userId)
+	progress, err := suite.courseUseCase.GetUserCourseProgress(ctx, courseId, userId)
 
-    assert.Error(suite.T(), err)
-    assert.Equal(suite.T(), apierror.ErrInternalServer, err)
-    assert.Equal(suite.T(), 0.0, progress)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), apierror.ErrInternalServer.Build(), err)
+	assert.Equal(suite.T(), 0.0, progress)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestFilterCourses_ByCategory() {
-    ctx := context.Background()
-    category := "Programming Languages"
-    req := FilterCoursesRequest{
-        Category: &category,
-        Page:     1,
-        Limit:    10,
-    }
-    mockCourses := []schema.Course{{ID: uuid.New(), Title: "Intro to Go"}, {ID: uuid.New(), Title: "Advanced Python"}}
-    total := 2
+	ctx := context.Background()
+	category := "Programming Languages"
+	req := FilterCoursesRequest{
+		Category: &category,
+		Page:     1,
+		Limit:    10,
+	}
+	mockCourses := []schema.Course{{ID: uuid.New(), Title: "Intro to Go"}, {ID: uuid.New(), Title: "Advanced Python"}}
+	total := 2
 
-    suite.courseRepo.On("DynamicFilterCourses", ctx, "category", "Programming Languages", "", 1, 10).Return(mockCourses, total, nil)
+	suite.courseRepo.On("DynamicFilterCourses", ctx, "category", "Programming Languages", "", 1, 10).Return(mockCourses, total, nil)
 
-    response, err := suite.courseUseCase.FilterCourses(ctx, req)
+	response, err := suite.courseUseCase.FilterCourses(ctx, req)
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), response.Courses, 2)
-    assert.Equal(suite.T(), total, response.Pagination.TotalData)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), response.Courses, 2)
+	assert.Equal(suite.T(), total, response.Pagination.TotalData)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestFilterCourses_ByDifficulty() {
-    ctx := context.Background()
-    difficulty := "beginner"
-    req := FilterCoursesRequest{
-        Difficulty: &difficulty,
-        Page:       1,
-        Limit:      10,
-    }
+	ctx := context.Background()
+	difficulty := "beginner"
+	req := FilterCoursesRequest{
+		Difficulty: &difficulty,
+		Page:       1,
+		Limit:      10,
+	}
 
-    mockCourses := []schema.Course{{ID: uuid.New(), Title: "Basic HTML"}, {ID: uuid.New(), Title: "CSS Fundamentals"}}
-    total := 2
+	mockCourses := []schema.Course{{ID: uuid.New(), Title: "Basic HTML"}, {ID: uuid.New(), Title: "CSS Fundamentals"}}
+	total := 2
 
-    suite.courseRepo.On("DynamicFilterCourses", ctx, "difficulty", "beginner", "", 1, 10).Return(mockCourses, total, nil)
+	suite.courseRepo.On("DynamicFilterCourses", ctx, "difficulty", "beginner", "", 1, 10).Return(mockCourses, total, nil)
 
-    response, err := suite.courseUseCase.FilterCourses(ctx, req)
+	response, err := suite.courseUseCase.FilterCourses(ctx, req)
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), response.Courses, 2)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), response.Courses, 2)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestFilterCourses_ByRating() {
-    ctx := context.Background()
-    rating := float32(4.0)
-    req := FilterCoursesRequest{
-        Rating: &rating,
-        Page:   1,
-        Limit:  10,
-    }
+	ctx := context.Background()
+	rating := float32(4.0)
+	req := FilterCoursesRequest{
+		Rating: &rating,
+		Page:   1,
+		Limit:  10,
+	}
 
-    mockCourses := []schema.Course{{ID: uuid.New(), Title: "React for Beginners"}, {ID: uuid.New(), Title: "Vue Advanced Techniques"}}
-    total := 2
+	mockCourses := []schema.Course{{ID: uuid.New(), Title: "React for Beginners"}, {ID: uuid.New(), Title: "Vue Advanced Techniques"}}
+	total := 2
 
-    suite.courseRepo.On("DynamicFilterCourses", ctx, "rating", "4.0", "", 1, 10).Return(mockCourses, total, nil)
+	suite.courseRepo.On("DynamicFilterCourses", ctx, "rating", "4.0", "", 1, 10).Return(mockCourses, total, nil)
 
-    response, err := suite.courseUseCase.FilterCourses(ctx, req)
+	response, err := suite.courseUseCase.FilterCourses(ctx, req)
 
-    assert.NoError(suite.T(), err)
-    assert.Len(suite.T(), response.Courses, 2)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.NoError(suite.T(), err)
+	assert.Len(suite.T(), response.Courses, 2)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func (suite *CourseUseCaseTestSuite) TestFilterCourses_Failure() {
-    ctx := context.Background()
-    category := "Programming Languages"
-    req := FilterCoursesRequest{
-        Category: &category,
-        Page:     1,
-        Limit:    10,
-    }
+	ctx := context.Background()
+	category := "Programming Languages"
+	req := FilterCoursesRequest{
+		Category: &category,
+		Page:     1,
+		Limit:    10,
+	}
 
-    suite.courseRepo.On("DynamicFilterCourses", ctx, "category", "Programming Languages", "", 1, 10).Return([]schema.Course{}, 0, apierror.ErrInternalServer)
+	suite.courseRepo.On("DynamicFilterCourses", ctx, "category", "Programming Languages", "", 1, 10).
+		Return([]schema.Course{}, 0, apierror.ErrInternalServer.Build())
 
-    response, err := suite.courseUseCase.FilterCourses(ctx, req)
+	response, err := suite.courseUseCase.FilterCourses(ctx, req)
 
-    assert.Error(suite.T(), err)
-    assert.Nil(suite.T(), response)
-    suite.courseRepo.AssertExpectations(suite.T())
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), response)
+	suite.courseRepo.AssertExpectations(suite.T())
 }
 
 func TestCourseUseCaseTestSuite(t *testing.T) {
-    suite.Run(t, new(CourseUseCaseTestSuite))
+	suite.Run(t, new(CourseUseCaseTestSuite))
 }
-

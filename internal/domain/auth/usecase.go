@@ -37,13 +37,13 @@ func (uc *UseCase) Register(req *RegisterRequest) error {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Println("Error generating UUID: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	userEntity := schema.User{
@@ -61,10 +61,10 @@ func (uc *UseCase) Register(req *RegisterRequest) error {
 		var pgErr *pgconn.PgError
 		ok := errors.As(err, &pgErr)
 		if ok && pgErr.Code == "23505" {
-			return ErrEmailAlreadyRegistered
+			return ErrEmailAlreadyRegistered.Build()
 		}
 		log.Println("Error creating user: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -74,15 +74,15 @@ func (uc *UseCase) Login(req *LoginRequest) (*LoginResponse, error) {
 	usr, err := uc.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrInvalidCredentials
+			return nil, ErrInvalidCredentials.Build()
 		}
 		log.Println("Error getting user by email: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(req.Password))
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, ErrInvalidCredentials.Build()
 	}
 
 	accessToken, err := jwtoken.CreateAccessJWT(
@@ -90,13 +90,13 @@ func (uc *UseCase) Login(req *LoginRequest) (*LoginResponse, error) {
 	)
 	if err != nil {
 		log.Println("Error creating access token: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	refreshToken, err := jwtoken.CreateRefreshJWT(usr.ID.String())
 	if err != nil {
 		log.Println("Error creating refresh token: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	return &LoginResponse{
@@ -109,29 +109,29 @@ func (uc *UseCase) Login(req *LoginRequest) (*LoginResponse, error) {
 func (uc *UseCase) Refresh(req *RefreshRequest) (*RefreshResponse, error) {
 	claims, err := jwtoken.DecodeRefreshJWT(req.RefreshToken)
 	if err != nil {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	if claims.Issuer != "seatudy-backend-refreshtoken" {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	if claims.ExpiresAt.Time.Before(time.Now()) {
-		return nil, apierror.ErrTokenExpired
+		return nil, apierror.ErrTokenExpired.Build()
 	}
 
 	id, err := uuid.Parse(claims.Subject)
 	if err != nil {
-		return nil, apierror.ErrTokenInvalid
+		return nil, apierror.ErrTokenInvalid.Build()
 	}
 
 	userEntity, err := uc.userRepo.GetByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, apierror.ErrTokenInvalid
+			return nil, apierror.ErrTokenInvalid.Build()
 		}
 		log.Println("Error getting user by ID: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	accessToken, err := jwtoken.CreateAccessJWT(
@@ -139,7 +139,7 @@ func (uc *UseCase) Refresh(req *RefreshRequest) (*RefreshResponse, error) {
 	)
 	if err != nil {
 		log.Println("Error creating access token: ", err)
-		return nil, apierror.ErrInternalServer
+		return nil, apierror.ErrInternalServer.Build()
 	}
 
 	return &RefreshResponse{
@@ -162,7 +162,7 @@ func (uc *UseCase) SendOTP(ctx context.Context) error {
 	isEmailVerified := ctx.Value("user.is_email_verified").(bool)
 
 	if isEmailVerified {
-		return ErrEmailAlreadyVerified
+		return ErrEmailAlreadyVerified.Build()
 	}
 
 	otp := strconv.Itoa(generateOTP())
@@ -171,7 +171,7 @@ func (uc *UseCase) SendOTP(ctx context.Context) error {
 	err := uc.authRepo.SaveOTP(ctx, email, otp)
 	if err != nil {
 		log.Println("Error saving OTP: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	// Send OTP to email
@@ -183,12 +183,12 @@ func (uc *UseCase) SendOTP(ctx context.Context) error {
 	mail, err := mailer.GenerateMail(email, "Your Seatudy OTP Code", otpEmailTemplate, data)
 	if err != nil {
 		log.Println("Error generating OTP email: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if err = uc.mailDialer.DialAndSend(mail); err != nil {
 		log.Println("Error sending OTP email: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -200,24 +200,24 @@ func (uc *UseCase) VerifyOTP(ctx context.Context, req *VerifyEmailRequest) error
 	savedOTP, err := uc.authRepo.GetOTP(ctx, email)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return ErrExpiredOTP
+			return ErrExpiredOTP.Build()
 		}
 		log.Println("Error getting OTP: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if req.OTP != savedOTP {
-		return ErrInvalidOTP
+		return ErrInvalidOTP.Build()
 	}
 
 	if err = uc.authRepo.DeleteOTP(ctx, email); err != nil {
 		log.Println("Error deleting OTP: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if err := uc.userRepo.UpdateByEmail(email, &schema.User{IsEmailVerified: true}); err != nil {
 		log.Println("Error updating user email verification status: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -240,10 +240,10 @@ func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPass
 	userEntity, err := uc.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return user.ErrUserNotFound
+			return user.ErrUserNotFound.Build()
 		}
 		log.Println("Error getting user by email: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	token := generateRandomString(32)
@@ -251,7 +251,7 @@ func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPass
 	err = uc.authRepo.SaveResetPasswordToken(ctx, req.Email, token)
 	if err != nil {
 		log.Println("Error saving reset password token: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	data := map[string]any{
@@ -263,12 +263,12 @@ func (uc *UseCase) SendResetPasswordLink(ctx context.Context, req *SendResetPass
 	mail, err := mailer.GenerateMail(req.Email, "Reset Your Seatudy Password", resetPasswordEmailTemplate, data)
 	if err != nil {
 		log.Println("Error generating reset password email: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if err := uc.mailDialer.DialAndSend(mail); err != nil {
 		log.Println("Error sending reset password email: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -278,31 +278,31 @@ func (uc *UseCase) ResetPassword(ctx context.Context, req *ResetPasswordRequest)
 	savedToken, err := uc.authRepo.GetResetPasswordToken(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return ErrExpiredResetPasswordLink
+			return ErrExpiredResetPasswordLink.Build()
 		}
 		log.Println("Error getting reset password token: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if req.Token != savedToken {
-		return ErrInvalidResetPasswordLink
+		return ErrInvalidResetPasswordLink.Build()
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	err = uc.userRepo.UpdateByEmail(req.Email, &schema.User{PasswordHash: string(passwordHash)})
 	if err != nil {
 		log.Println("Error updating user password: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	if err = uc.authRepo.DeleteResetPasswordToken(ctx, req.Email); err != nil {
 		log.Println("Error deleting reset password token: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil
@@ -314,27 +314,27 @@ func (uc *UseCase) ChangePassword(ctx context.Context, req *ChangePasswordReques
 	userEntity, err := uc.userRepo.GetByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return user.ErrUserNotFound
+			return user.ErrUserNotFound.Build()
 		}
 		log.Println("Error getting user by email: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(userEntity.PasswordHash), []byte(req.OldPassword))
 	if err != nil {
-		return ErrInvalidCredentials
+		return ErrInvalidCredentials.Build()
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	err = uc.userRepo.UpdateByEmail(email, &schema.User{PasswordHash: string(passwordHash)})
 	if err != nil {
 		log.Println("Error updating user password: ", err)
-		return apierror.ErrInternalServer
+		return apierror.ErrInternalServer.Build()
 	}
 
 	return nil

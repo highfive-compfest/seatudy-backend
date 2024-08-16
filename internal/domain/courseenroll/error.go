@@ -6,5 +6,7 @@ import (
 )
 
 var (
-	ErrNotEnrolled = apierror.ApiError{HttpStatus: http.StatusForbidden, Message: "NOT_ENROLLED", Payload: nil}
+	ErrNotEnrolled = apierror.NewApiErrorBuilder().
+		WithHttpStatus(http.StatusBadRequest).
+		WithMessage("COURSE_NOT_ENROLLED")
 )

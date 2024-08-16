@@ -6,6 +6,11 @@ import (
 )
 
 var (
-	ErrDiscussionNotFound = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "DISCUSSION_NOT_FOUND"}
-	ErrReplyNotFound      = apierror.ApiError{HttpStatus: http.StatusNotFound, Message: "REPLY_NOT_FOUND"}
+	ErrDiscussionNotFound = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusNotFound).
+				WithMessage("DISCUSSION_NOT_FOUND")
+
+	ErrReplyNotFound = apierror.NewApiErrorBuilder().
+				WithHttpStatus(http.StatusNotFound).
+				WithMessage("REPLY_NOT_FOUND")
 )
