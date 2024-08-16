@@ -1,7 +1,7 @@
 package course
 
 import (
-	"log"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -139,7 +139,7 @@ func (c *RestController) GetCourseEnrollments() gin.HandlerFunc {
 			return
 		}
 
-		log.Println(users)
+
 
 		if len(users) == 0 {
 			response.NewRestResponse(http.StatusOK, "No enrollments found for this course", nil).Send(ctx)

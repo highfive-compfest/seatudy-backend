@@ -2,7 +2,7 @@ package course
 
 import (
 	"context"
-	"log"
+
 	"strconv"
 
 	"github.com/google/uuid"
@@ -83,9 +83,7 @@ func (r *repository) GetUserCourseProgress(ctx context.Context, courseID, userID
 		Count(&completedAssignments).Error; err != nil {
 		return 0, err
 		}
-	
-		log.Println(totalAssignments)
-		log.Println(completedAssignments)
+
 
 	var progress float64
 	if totalAssignments > 0 {

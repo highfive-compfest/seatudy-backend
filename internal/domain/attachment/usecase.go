@@ -4,7 +4,6 @@ package attachment
 
 import (
 	"context"
-	"log"
 
 	"github.com/highfive-compfest/seatudy-backend/internal/schema"
 
@@ -28,11 +27,11 @@ func (auc *UseCase) CreateAttachment(ctx context.Context, fileHeader *multipart.
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Println("Error generating UUID: ", err)
+	
 		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
-	log.Println("masuk ini")
+
 
 	fileURL, err := auc.uploader.UploadFile("attachments/material/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
@@ -57,11 +56,11 @@ func (auc *UseCase) CreateAssignmentAttachment(ctx context.Context, fileHeader *
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Println("Error generating UUID: ", err)
+
 		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
-	log.Println("masuk ini")
+
 
 	fileURL, err := auc.uploader.UploadFile("attachments/assignment/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
@@ -86,11 +85,11 @@ func (auc *UseCase) CreateSubmissionAttachment(ctx context.Context, fileHeader *
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Println("Error generating UUID: ", err)
+
 		return schema.Attachment{}, apierror.ErrInternalServer.Build()
 	}
 
-	log.Println("masuk ini")
+
 
 	fileURL, err := auc.uploader.UploadFile("attachments/submission/"+id.String()+"."+fileHeader.Filename, fileHeader)
 	if err != nil {
