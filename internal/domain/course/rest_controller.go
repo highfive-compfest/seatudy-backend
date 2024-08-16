@@ -1,7 +1,7 @@
 package course
 
 import (
-	"log"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -110,7 +110,6 @@ func (c *RestController) GetInstructorCourse() gin.HandlerFunc {
 			return
 		}
 
-		// Fetch all courses by the instructor ID
 		result, err := c.uc.GetByInstructorID(ctx, instructorID, req.Page, req.Limit)
 		if err != nil {
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
@@ -140,7 +139,7 @@ func (c *RestController) GetCourseEnrollments() gin.HandlerFunc {
 			return
 		}
 
-		log.Println(users)
+
 
 		if len(users) == 0 {
 			response.NewRestResponse(http.StatusOK, "No enrollments found for this course", nil).Send(ctx)
@@ -254,16 +253,13 @@ func (c *RestController) Create() gin.HandlerFunc {
 
 func (c *RestController) Update() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// Ensure user role is "instructor"
 
-		// Parse UUID from the URL parameter
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
 			response.NewRestResponse(http.StatusBadRequest, "Invalid ID", nil).Send(ctx)
 			return
 		}
 
-		// Bind JSON payload to UpdateCourseRequest struct
 		var req UpdateCourseRequest
 		if err := ctx.ShouldBind(&req); err != nil {
 			response.NewRestResponse(http.StatusBadRequest, "Invalid course data: "+err.Error(), nil).Send(ctx)
@@ -275,18 +271,16 @@ func (c *RestController) Update() gin.HandlerFunc {
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
-		// Handle optional file uploads
+
 		imageFile, _ := ctx.FormFile("image")
 		syllabusFile, _ := ctx.FormFile("syllabus")
 
-		// Call the use case to update the course
 		updatedCourse, err := c.uc.Update(ctx.Request.Context(), req, id, imageFile, syllabusFile)
 		if err != nil {
 			response.NewRestResponse(apierror.GetHttpStatus(err), err.Error(), apierror.GetPayload(err)).Send(ctx)
 			return
 		}
 
-		// Successfully updated the course
 		response.NewRestResponse(http.StatusOK, "Course updated successfully", updatedCourse).Send(ctx)
 	}
 }
@@ -321,11 +315,11 @@ func (c *RestController) checkCourseOwnership(ctx *gin.Context, courseID uuid.UU
 	}
 	course, err := c.uc.GetByID(ctx, courseID)
 	if err != nil {
-		return err // This error should be handled by the calling function to send the appropriate response
+		return err
 	}
 
 	if course.InstructorID.String() != instructorID {
-		return ErrNotOwnerAccess.Build() // Define this error in your apierror package
+		return ErrNotOwnerAccess.Build()
 	}
 	return nil
 }

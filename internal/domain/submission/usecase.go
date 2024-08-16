@@ -82,7 +82,6 @@ func (uc *UseCase) CreateSubmission(ctx context.Context, req *CreateSubmissionRe
 		Content:      req.Content,
 	}
 
-	log.Println(req.Attachments)
 
 	for _, fileHeader := range req.Attachments {
 		attachmentObj, err := uc.attachmentUseCase.CreateSubmissionAttachment(ctx, fileHeader, "")
@@ -165,14 +164,14 @@ func (uc *UseCase) GradeSubmission(ctx context.Context, userId string, id uuid.U
 		return err
 	}
 
-	log.Println(submission)
+	
 
 	assignment, err := uc.assignmentRepo.GetByID(ctx, submission.AssignmentID)
 	if err != nil {
 		return err
 	}
 
-	log.Println(assignment.CourseID)
+
 
 	courseId := assignment.CourseID
 	// Get the course to verify the instructor ID
@@ -180,8 +179,7 @@ func (uc *UseCase) GradeSubmission(ctx context.Context, userId string, id uuid.U
 	if err != nil {
 		return err
 	}
-	log.Println("halo guys")
-	log.Println(course)
+
 
 	// Check if the current user is the instructor of the course
 	if course.InstructorID.String() != userId {
@@ -278,7 +276,7 @@ func (uc *UseCase) CheckSubmissionExists(ctx context.Context, userID uuid.UUID, 
 		return err
 	}
 	if exists {
-		return ErrSubmissionAlreadyExists // Define this error in your errors package
+		return ErrSubmissionAlreadyExists 
 	}
 	return nil
 }

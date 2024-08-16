@@ -224,23 +224,17 @@ func (suite *MaterialUseCaseTestSuite) TestAddAttachment_Success() {
 		Attachments: []schema.Attachment{},
 	}
 
-	// Mock GetByID to return existing material
+
 	suite.materialRepo.On("GetByID", ctx, materialID).Return(existingMaterial, nil)
-
-	// Mock UploadFile to return URL
 	suite.uploader.On("UploadFile", mock.AnythingOfType("string"), mock.AnythingOfType("*multipart.FileHeader")).Return(expectedAttachment.URL, nil)
-
-	// Mock Create to simulate attachment creation
 	suite.attachmentRepo.On("Create", ctx, mock.AnythingOfType("*schema.Attachment")).Return(nil)
-
-	// Mock Update to simulate material update
 	suite.materialRepo.On("Update", ctx, existingMaterial).Return(nil)
 
 	err := suite.materialUseCase.AddAttachment(ctx, materialID, req)
 
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), 1, len(existingMaterial.Attachments)) // Ensuring attachment was added
-	assert.Equal(suite.T(), expectedAttachment.URL, existingMaterial.Attachments[0].URL) // URL check
+	assert.Equal(suite.T(), 1, len(existingMaterial.Attachments))
+	assert.Equal(suite.T(), expectedAttachment.URL, existingMaterial.Attachments[0].URL) 
 	suite.materialRepo.AssertExpectations(suite.T())
 	suite.attachmentRepo.AssertExpectations(suite.T())
 }
